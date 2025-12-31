@@ -2,28 +2,28 @@
 
 Model Context Protocol (MCP) server for Proxmox Virtual Environment infrastructure management. Control and monitor your Proxmox infrastructure through an AI-powered interface.
 
-**Focused on:** Comprehensive Proxmox infrastructure management including cluster operations, VM/container lifecycle, user access control, and backup/restore operations.
+**Focused on:** Comprehensive Proxmox infrastructure management including cluster operations, VM/container lifecycle, user access control, backup/restore operations, storage management, and task monitoring.
 
-⚠️ **Early Development Warning**: This project is in early development and may contain bugs that could cause unexpected behavior. Use with caution in production environments.
+⚠️ **Early Development Warning**: This project is in active development (Phase 4 complete). While tested and functional, use with caution in production environments.
 
 ⚠️ **Prompt Injection Risk**: You are responsible for guarding against prompt injection when using these tools. Exercise extreme caution or use MCP tools only on systems and data you trust.
 
 ## Features
 
-- **73 management tools** across 6 operational categories
-- **User & Access Management**: 16 tools for users, groups, roles, and ACLs
+- **81 management tools** across 8 operational categories (Phase 4 complete)
+- **User & Access Management**: 15 tools for users, groups, roles, and ACLs
 - **Backup & Restore Operations**: 6 tools for VM/container backup creation, management, and restoration
 - **VM Creation & Cloning**: 4 tools for creating, cloning, and configuring virtual machines
 - **VM Snapshots & Backups**: 5 tools for creating, listing, restoring, and deleting VM snapshots
 - **VM Migration**: Tools for live and offline VM migration to other nodes
 - **Container Creation & Cloning**: 6 tools for container management and lifecycle
-- **Advanced Cluster Management**: 6 tools for detailed cluster and status operations
+- **Storage Management**: 9 tools including storage device info, creation, configuration, and content listing
+- **Task Management**: 3 tools for monitoring and controlling background tasks
+- **Node Management**: 11 tools for comprehensive node configuration, control, and maintenance
+- **Advanced Cluster Management**: 11 tools for detailed cluster and status operations
 - **VM Configuration Management**: Update VM configs, mark as template, manage settings
 - **Container Configuration Management**: Update container configs, manage settings
-- **Cluster Management**: Monitor cluster health and node status
-- **Virtual Machine Management**: List, monitor, and manage VMs
-- **Container Management**: Manage LXC containers
-- **Node Monitoring**: Track resource usage and uptime
+- **Performance Monitoring**: Track statistics, resource usage, and uptime across infrastructure
 - **Stdio Transport**: MCP protocol over standard input/output for seamless integration
 - **HTTP Transport**: Optional HTTP API for remote connections and integration
 
@@ -97,9 +97,9 @@ curl -X POST http://localhost:8000/mcp \
 - `MCP_TRANSPORT`: Set to `"http"` for HTTP transport (default: `"stdio"`)
 - `MCP_HTTP_ADDR`: HTTP server address (default: `:8000`)
 
-## Available Tools (73 Total)
+## Available Tools (81 Total - Phase 4 Complete)
 
-### User & Access Management (16 tools)
+### User & Access Management (15 tools)
 - `list_users` - List all users in the system
 - `get_user` - Get detailed information about a specific user
 - `create_user` - Create a new user account
@@ -117,21 +117,15 @@ curl -X POST http://localhost:8000/mcp \
 - `create_api_token` - Create a new API token for authentication
 - `delete_api_token` - Revoke an API token
 
-### Backup & Restore Operations (6 tools)
-- `list_backups` - List all available backups
-- `create_vm_backup` - Create a backup of a virtual machine
-- `create_container_backup` - Create a backup of an LXC container
-- `delete_backup` - Remove a backup
-- `restore_vm_backup` - Restore a VM from backup
-- `restore_container_backup` - Restore a container from backup
-
-### Cluster & Node Management (6 tools)
-- `get_nodes` - List all nodes in the Proxmox cluster
-- `get_node_status` - Get detailed status for a specific node
-- `get_cluster_resources` - Get overview of cluster resources (nodes, VMs, containers, storage)
-- `get_cluster_status` - Get cluster-wide status information
+### Storage Management (9 tools)
 - `get_storage` - List all storage devices in the cluster
 - `get_node_storage` - Get storage devices for a specific node
+- `get_storage_info` - Get detailed information about a specific storage device
+- `create_storage` - Create a new storage mount
+- `delete_storage` - Remove a storage configuration
+- `update_storage` - Modify storage configuration
+- `get_storage_content` - List contents (ISOs, backups, templates) in storage
+- `list_backups` - List available backups in storage
 
 ### Virtual Machine Management (21 tools)
 - `get_vms` - List all VMs on a specific node
@@ -155,8 +149,9 @@ curl -X POST http://localhost:8000/mcp \
 - `restore_vm_snapshot` - Restore a virtual machine from a snapshot
 - `get_vm_firewall_rules` - Get firewall rules for a virtual machine
 - `migrate_vm` - Migrate a virtual machine to another node
+- `get_vm_stats` - Get performance statistics for a virtual machine
 
-### Container Management (18 tools)
+### Container Management (20 tools)
 - `get_containers` - List all containers on a specific node
 - `get_container_status` - Get detailed container information and status
 - `get_container_config` - Get full configuration of a container
@@ -173,6 +168,21 @@ curl -X POST http://localhost:8000/mcp \
 - `list_container_snapshots` - List all snapshots for an LXC container
 - `delete_container_snapshot` - Delete a snapshot from an LXC container
 - `restore_container_snapshot` - Restore an LXC container from a snapshot
+- `get_container_stats` - Get performance statistics for a container
+
+### Resource Pools (2 tools)
+- `list_pools` - List all resource pools in the cluster
+- `get_pool` - Get details for a specific resource pool
+
+## Implementation Status
+
+**Phase 4 Complete** - 81 tools fully implemented:
+- ✅ Phase 1: Cluster & VM/Container basics (40 tools)
+- ✅ Phase 2: User management & advanced operations (20 tools)
+- ✅ Phase 3: Resource pools & task monitoring (8 tools)
+- ✅ Phase 4: Storage, task, and node management (13 tools)
+
+**Next Phase (Optional)**: Pool CRUD operations, firewall/network rules, cluster management, API token enumeration
 
 ## Skills & Capabilities
 
@@ -236,7 +246,17 @@ MIT License - See LICENSE file for details
 
 For issues and questions:
 - Check the [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/index.html)
+- Review [TOOLS_QUICK_REFERENCE.md](docs/TOOLS_QUICK_REFERENCE.md) for all tool documentation
+- See [MISSING_TOOLS_ANALYSIS.md](docs/MISSING_TOOLS_ANALYSIS.md) for implementation details and roadmap
 - Review implementation examples in `internal/`
+
+## Recent Updates
+
+**December 31, 2025** - Phase 4 Complete
+- Added 13 new tools for storage management, task monitoring, and node operations
+- Total tools increased from 68 to 81
+- All tools tested and integrated with MCP framework
+- Comprehensive documentation updated
 
 ---
 
