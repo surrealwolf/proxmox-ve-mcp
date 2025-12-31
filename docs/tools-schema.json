@@ -1,0 +1,311 @@
+{
+  "version": "1.0",
+  "description": "Proxmox VE MCP Server - Tool Definitions",
+  "tools": [
+    {
+      "name": "get_nodes",
+      "description": "Get all nodes in the Proxmox cluster",
+      "category": "Cluster & Node Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_node_status",
+      "description": "Get detailed status information for a specific node including CPU, memory, and storage",
+      "category": "Cluster & Node Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node (e.g., pve1, pve2)"
+          }
+        },
+        "required": ["node_name"]
+      }
+    },
+    {
+      "name": "get_cluster_resources",
+      "description": "Get all cluster resources including nodes, VMs, and containers",
+      "category": "Cluster & Node Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_storage",
+      "description": "Get all storage devices in the cluster with capacity and usage information",
+      "category": "Storage Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_node_storage",
+      "description": "Get storage devices accessible from a specific node",
+      "category": "Storage Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node (e.g., pve1, pve2)"
+          }
+        },
+        "required": ["node_name"]
+      }
+    },
+    {
+      "name": "get_vms",
+      "description": "Get all virtual machines running on a specific node",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node (e.g., pve1, pve2)"
+          }
+        },
+        "required": ["node_name"]
+      }
+    },
+    {
+      "name": "get_vm_status",
+      "description": "Get detailed status of a specific virtual machine",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where VM is running"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual Machine ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "vmid"]
+      }
+    },
+    {
+      "name": "start_vm",
+      "description": "Start a virtual machine that is currently stopped",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where VM is located"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual Machine ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "vmid"]
+      }
+    },
+    {
+      "name": "stop_vm",
+      "description": "Stop a virtual machine immediately (hard stop)",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where VM is running"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual Machine ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "vmid"]
+      }
+    },
+    {
+      "name": "shutdown_vm",
+      "description": "Gracefully shutdown a virtual machine (allows guest OS to shut down)",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where VM is running"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual Machine ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "vmid"]
+      }
+    },
+    {
+      "name": "reboot_vm",
+      "description": "Reboot a virtual machine gracefully",
+      "category": "Virtual Machine Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where VM is running"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual Machine ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "vmid"]
+      }
+    },
+    {
+      "name": "get_containers",
+      "description": "Get all LXC containers running on a specific node",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node (e.g., pve1, pve2)"
+          }
+        },
+        "required": ["node_name"]
+      }
+    },
+    {
+      "name": "get_container_status",
+      "description": "Get detailed status of a specific LXC container",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where container is running"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "container_id"]
+      }
+    },
+    {
+      "name": "start_container",
+      "description": "Start an LXC container that is currently stopped",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where container is located"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "container_id"]
+      }
+    },
+    {
+      "name": "stop_container",
+      "description": "Stop an LXC container immediately (hard stop)",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where container is running"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "container_id"]
+      }
+    },
+    {
+      "name": "shutdown_container",
+      "description": "Gracefully shutdown an LXC container (allows guest OS to shut down)",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where container is running"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "container_id"]
+      }
+    },
+    {
+      "name": "reboot_container",
+      "description": "Reboot an LXC container gracefully",
+      "category": "Container Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Name of the node where container is running"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID (must be > 0)"
+          }
+        },
+        "required": ["node_name", "container_id"]
+      }
+    }
+  ],
+  "categories": {
+    "Cluster & Node Management": {
+      "description": "Tools for querying cluster state and node information",
+      "tools": 3,
+      "read_only": true
+    },
+    "Storage Management": {
+      "description": "Tools for querying storage devices and capacity",
+      "tools": 2,
+      "read_only": true
+    },
+    "Virtual Machine Management": {
+      "description": "Tools for querying and controlling virtual machines",
+      "tools": 6,
+      "read_only": false
+    },
+    "Container Management": {
+      "description": "Tools for querying and controlling LXC containers",
+      "tools": 6,
+      "read_only": false
+    }
+  },
+  "summary": {
+    "total_tools": 17,
+    "read_only_tools": 5,
+    "control_tools": 12,
+    "categories": 4
+  }
+}
