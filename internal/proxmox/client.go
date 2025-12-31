@@ -76,17 +76,51 @@ type Storage struct {
 	Total   int64  `json:"total,omitempty"`
 }
 
-// NodeStatus represents detailed node status
+// MemoryInfo represents memory statistics
+type MemoryInfo struct {
+	Used      int64 `json:"used,omitempty"`
+	Available int64 `json:"available,omitempty"`
+	Total     int64 `json:"total,omitempty"`
+	Free      int64 `json:"free,omitempty"`
+}
+
+// SwapInfo represents swap statistics
+type SwapInfo struct {
+	Used  int64 `json:"used,omitempty"`
+	Total int64 `json:"total,omitempty"`
+	Free  int64 `json:"free,omitempty"`
+}
+
+// RootfsInfo represents rootfs statistics
+type RootfsInfo struct {
+	Used  int64 `json:"used,omitempty"`
+	Total int64 `json:"total,omitempty"`
+	Free  int64 `json:"free,omitempty"`
+	Avail int64 `json:"avail,omitempty"`
+}
+
+// CPUInfo represents CPU information
+type CPUInfo struct {
+	Cores   int    `json:"cores,omitempty"`
+	CPUs    int    `json:"cpus,omitempty"`
+	Sockets int    `json:"sockets,omitempty"`
+	MHz     string `json:"mhz,omitempty"`
+	Model   string `json:"model,omitempty"`
+}
+
+// NodeStatus represents detailed node status from /nodes/{node}/status API
 type NodeStatus struct {
-	Node      string  `json:"node"`
-	Status    string  `json:"status"`
-	Uptime    int64   `json:"uptime,omitempty"`
-	CPU       float64 `json:"cpu,omitempty"`
-	MaxCPU    int     `json:"maxcpu,omitempty"`
-	Memory    int64   `json:"memory,omitempty"`
-	MaxMemory int64   `json:"maxmemory,omitempty"`
-	Disk      int64   `json:"disk,omitempty"`
-	MaxDisk   int64   `json:"maxdisk,omitempty"`
+	Uptime      int64       `json:"uptime,omitempty"`
+	CPU         float64     `json:"cpu,omitempty"`
+	Idle        float64     `json:"idle,omitempty"`
+	Wait        float64     `json:"wait,omitempty"`
+	Memory      MemoryInfo  `json:"memory,omitempty"`
+	Swap        SwapInfo    `json:"swap,omitempty"`
+	Rootfs      RootfsInfo  `json:"rootfs,omitempty"`
+	CPUInfo     CPUInfo     `json:"cpuinfo,omitempty"`
+	PVEVersion  string      `json:"pveversion,omitempty"`
+	KVersion    string      `json:"kversion,omitempty"`
+	LoadAvg     []string    `json:"loadavg,omitempty"`
 }
 
 // Task represents a background task
@@ -196,18 +230,18 @@ func (c *Client) GetNodes(ctx context.Context) ([]Node, error) {
 }
 
 // GetNode retrieves information about a specific node
-func (c *Client) GetNode(ctx context.Context, nodeName string) (*Node, error) {
+func (c *Client) GetNode(ctx context.Context, nodeName string) (*NodeStatus, error) {
 	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/status", nodeName), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var node Node
-	if err := json.Unmarshal(marshalJSON(data), &node); err != nil {
+	var nodeStatus NodeStatus
+	if err := json.Unmarshal(marshalJSON(data), &nodeStatus); err != nil {
 		return nil, fmt.Errorf("failed to parse node: %w", err)
 	}
 
-	return &node, nil
+	return &nodeStatus, nil
 }
 
 // GetVMs retrieves a list of VMs on a specific node
