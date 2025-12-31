@@ -443,10 +443,29 @@ func (s *Server) registerTools() {
 		"node_name": map[string]any{"type": "string", "description": "Node name"},
 	})
 
+	// ============ POOL MANAGEMENT ============
+	addTool("create_pool", "Create a new resource pool", s.createPool, map[string]any{
+		"poolid":  map[string]any{"type": "string", "description": "Pool ID"},
+		"comment": map[string]any{"type": "string", "description": "Pool comment (optional)"},
+		"members": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Pool members array (optional)"},
+	})
+	addTool("update_pool", "Modify an existing resource pool", s.updatePool, map[string]any{
+		"poolid":  map[string]any{"type": "string", "description": "Pool ID"},
+		"comment": map[string]any{"type": "string", "description": "Pool comment (optional)"},
+		"members": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Pool members array (optional)"},
+		"delete":  map[string]any{"type": "boolean", "description": "Delete pool members (optional)"},
+	})
+	addTool("delete_pool", "Remove a resource pool", s.deletePool, map[string]any{
+		"poolid": map[string]any{"type": "string", "description": "Pool ID"},
+	})
+	addTool("get_pool_members", "Get all resources in a resource pool", s.getPoolMembers, map[string]any{
+		"poolid": map[string]any{"type": "string", "description": "Pool ID"},
+	})
+
 	for _, tool := range tools {
 		s.server.AddTool(tool.Tool, tool.Handler)
 	}
-	s.logger.Info("Registered 81 tools")
+	s.logger.Info("Registered 85 tools")
 }
 
 // ServeStdio starts the MCP server with stdio transport
@@ -2879,5 +2898,112 @@ func (s *Server) getNodeCert(ctx context.Context, request mcp.CallToolRequest) (
 		"message": "Node certificate information retrieved successfully",
 		"node":    nodeName,
 		"cert":    cert,
+	})
+}
+
+// ============ POOL MANAGEMENT ============
+
+func (s *Server) createPool(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_pool")
+
+	poolID := request.GetString("poolid", "")
+	if poolID == "" {
+		return mcp.NewToolResultError("poolid parameter is required"), nil
+	}
+
+	comment := request.GetString("comment", "")
+
+	// Get members array
+	args := request.GetArguments()
+	members := []string{}
+	if membersValue, ok := args["members"]; ok && membersValue != nil {
+		membersBytes, err := json.Marshal(membersValue)
+		if err == nil {
+			json.Unmarshal(membersBytes, &members)
+		}
+	}
+
+	result, err := s.proxmoxClient.CreatePool(ctx, poolID, comment, members)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create pool: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pool created successfully",
+		"poolid":  poolID,
+		"result":  result,
+	})
+}
+
+func (s *Server) updatePool(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: update_pool")
+
+	poolID := request.GetString("poolid", "")
+	if poolID == "" {
+		return mcp.NewToolResultError("poolid parameter is required"), nil
+	}
+
+	comment := request.GetString("comment", "")
+	delete := request.GetBool("delete", false)
+
+	// Get members array
+	args := request.GetArguments()
+	members := []string{}
+	if membersValue, ok := args["members"]; ok && membersValue != nil {
+		membersBytes, err := json.Marshal(membersValue)
+		if err == nil {
+			json.Unmarshal(membersBytes, &members)
+		}
+	}
+
+	result, err := s.proxmoxClient.UpdatePool(ctx, poolID, comment, members, delete)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to update pool: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pool updated successfully",
+		"poolid":  poolID,
+		"result":  result,
+	})
+}
+
+func (s *Server) deletePool(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_pool")
+
+	poolID := request.GetString("poolid", "")
+	if poolID == "" {
+		return mcp.NewToolResultError("poolid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeletePool(ctx, poolID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete pool: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pool deleted successfully",
+		"poolid":  poolID,
+		"result":  result,
+	})
+}
+
+func (s *Server) getPoolMembers(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_pool_members")
+
+	poolID := request.GetString("poolid", "")
+	if poolID == "" {
+		return mcp.NewToolResultError("poolid parameter is required"), nil
+	}
+
+	members, err := s.proxmoxClient.GetPoolMembers(ctx, poolID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get pool members: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pool members retrieved successfully",
+		"poolid":  poolID,
+		"members": members,
 	})
 }
