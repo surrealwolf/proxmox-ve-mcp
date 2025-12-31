@@ -278,6 +278,466 @@
         },
         "required": ["node_name", "container_id"]
       }
+    },
+    {
+      "name": "list_users",
+      "description": "List all users in the system",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_user",
+      "description": "Get details for a specific user",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID (e.g., user@pve)"
+          }
+        },
+        "required": ["userid"]
+      }
+    },
+    {
+      "name": "create_user",
+      "description": "Create a new user",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID (e.g., user@pve)"
+          },
+          "password": {
+            "type": "string",
+            "description": "Initial password"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address (optional)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment (optional)"
+          }
+        },
+        "required": ["userid", "password"]
+      }
+    },
+    {
+      "name": "update_user",
+      "description": "Update user properties",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address (optional)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment (optional)"
+          },
+          "firstname": {
+            "type": "string",
+            "description": "First name (optional)"
+          },
+          "lastname": {
+            "type": "string",
+            "description": "Last name (optional)"
+          },
+          "enable": {
+            "type": "boolean",
+            "description": "Enable/disable user (optional)"
+          },
+          "expire": {
+            "type": "integer",
+            "description": "Expiration Unix timestamp (optional)"
+          }
+        },
+        "required": ["userid"]
+      }
+    },
+    {
+      "name": "delete_user",
+      "description": "Delete a user",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          }
+        },
+        "required": ["userid"]
+      }
+    },
+    {
+      "name": "change_password",
+      "description": "Change user password",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "password": {
+            "type": "string",
+            "description": "New password"
+          }
+        },
+        "required": ["userid", "password"]
+      }
+    },
+    {
+      "name": "list_groups",
+      "description": "List all groups",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "create_group",
+      "description": "Create a new user group",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "groupid": {
+            "type": "string",
+            "description": "Group ID"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment (optional)"
+          }
+        },
+        "required": ["groupid"]
+      }
+    },
+    {
+      "name": "delete_group",
+      "description": "Delete a user group",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "groupid": {
+            "type": "string",
+            "description": "Group ID"
+          }
+        },
+        "required": ["groupid"]
+      }
+    },
+    {
+      "name": "list_roles",
+      "description": "List all available roles and their privileges",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "create_role",
+      "description": "Create a new role with specific privileges",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "roleid": {
+            "type": "string",
+            "description": "Role ID"
+          },
+          "privs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of privileges"
+          }
+        },
+        "required": ["roleid", "privs"]
+      }
+    },
+    {
+      "name": "delete_role",
+      "description": "Delete a role",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "roleid": {
+            "type": "string",
+            "description": "Role ID"
+          }
+        },
+        "required": ["roleid"]
+      }
+    },
+    {
+      "name": "list_acl",
+      "description": "List all access control list entries",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "set_acl",
+      "description": "Create or update an access control list entry",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "ACL path (e.g., /vms, /nodes)"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role ID"
+          },
+          "userid": {
+            "type": "string",
+            "description": "User ID (optional)"
+          },
+          "groupid": {
+            "type": "string",
+            "description": "Group ID (optional)"
+          },
+          "tokenid": {
+            "type": "string",
+            "description": "Token ID (optional)"
+          },
+          "propagate": {
+            "type": "boolean",
+            "description": "Propagate permissions down tree (optional)"
+          }
+        },
+        "required": ["path", "role"]
+      }
+    },
+    {
+      "name": "list_api_tokens",
+      "description": "List API tokens for a specific user",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          }
+        },
+        "required": ["userid"]
+      }
+    },
+    {
+      "name": "create_api_token",
+      "description": "Create a new API token for a user",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "tokenid": {
+            "type": "string",
+            "description": "Token ID"
+          },
+          "expire": {
+            "type": "integer",
+            "description": "Expiration Unix timestamp (optional)"
+          },
+          "privsep": {
+            "type": "boolean",
+            "description": "Separate privileges (optional)"
+          }
+        },
+        "required": ["userid", "tokenid"]
+      }
+    },
+    {
+      "name": "delete_api_token",
+      "description": "Delete an API token",
+      "category": "User & Access Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "tokenid": {
+            "type": "string",
+            "description": "Token ID"
+          }
+        },
+        "required": ["userid", "tokenid"]
+      }
+    },
+    {
+      "name": "list_backups",
+      "description": "List available backups in storage",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          }
+        },
+        "required": ["storage"]
+      }
+    },
+    {
+      "name": "create_vm_backup",
+      "description": "Create a backup of a virtual machine",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Node name"
+          },
+          "vmid": {
+            "type": "integer",
+            "description": "VM ID"
+          },
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Backup ID (optional)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Backup notes (optional)"
+          }
+        },
+        "required": ["node_name", "vmid", "storage"]
+      }
+    },
+    {
+      "name": "create_container_backup",
+      "description": "Create a backup of a container",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Node name"
+          },
+          "container_id": {
+            "type": "integer",
+            "description": "Container ID"
+          },
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Backup ID (optional)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Backup notes (optional)"
+          }
+        },
+        "required": ["node_name", "container_id", "storage"]
+      }
+    },
+    {
+      "name": "delete_backup",
+      "description": "Delete a backup file",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Backup ID/filename"
+          }
+        },
+        "required": ["storage", "backup_id"]
+      }
+    },
+    {
+      "name": "restore_vm_backup",
+      "description": "Restore a virtual machine from a backup",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Node name"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Backup ID/filename"
+          },
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          }
+        },
+        "required": ["node_name", "backup_id", "storage"]
+      }
+    },
+    {
+      "name": "restore_container_backup",
+      "description": "Restore a container from a backup",
+      "category": "Backup & Restore",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_name": {
+            "type": "string",
+            "description": "Node name"
+          },
+          "backup_id": {
+            "type": "string",
+            "description": "Backup ID/filename"
+          },
+          "storage": {
+            "type": "string",
+            "description": "Storage device ID"
+          }
+        },
+        "required": ["node_name", "backup_id", "storage"]
+      }
     }
   ],
   "categories": {
@@ -300,12 +760,22 @@
       "description": "Tools for querying and controlling LXC containers",
       "tools": 6,
       "read_only": false
+    },
+    "User & Access Management": {
+      "description": "Tools for managing users, groups, roles, and access control",
+      "tools": 17,
+      "read_only": false
+    },
+    "Backup & Restore": {
+      "description": "Tools for creating, managing, and restoring backups",
+      "tools": 6,
+      "read_only": false
     }
   },
   "summary": {
-    "total_tools": 17,
-    "read_only_tools": 5,
-    "control_tools": 12,
-    "categories": 4
+    "total_tools": 40,
+    "read_only_tools": 8,
+    "control_tools": 32,
+    "categories": 6
   }
 }

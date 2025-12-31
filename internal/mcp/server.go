@@ -114,10 +114,113 @@ func (s *Server) registerTools() {
 		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
 	})
 
+	// User Management - Query
+	addTool("list_users", "List all users in the system", s.listUsers, map[string]any{})
+	addTool("get_user", "Get details for a specific user", s.getUser, map[string]any{
+		"userid": map[string]any{"type": "string", "description": "User ID (e.g., user@pve)"},
+	})
+	addTool("list_groups", "List all groups", s.listGroups, map[string]any{})
+	addTool("list_roles", "List all available roles and their privileges", s.listRoles, map[string]any{})
+	addTool("list_acl", "List all access control list entries", s.listACLs, map[string]any{})
+	addTool("list_api_tokens", "List API tokens for a specific user", s.listAPITokens, map[string]any{
+		"userid": map[string]any{"type": "string", "description": "User ID"},
+	})
+
+	// User Management - Control
+	addTool("create_user", "Create a new user", s.createUser, map[string]any{
+		"userid":   map[string]any{"type": "string", "description": "User ID (e.g., user@pve)"},
+		"password": map[string]any{"type": "string", "description": "Initial password"},
+		"email":    map[string]any{"type": "string", "description": "Email address (optional)"},
+		"comment":  map[string]any{"type": "string", "description": "Comment (optional)"},
+	})
+	addTool("update_user", "Update user properties", s.updateUser, map[string]any{
+		"userid":    map[string]any{"type": "string", "description": "User ID"},
+		"email":     map[string]any{"type": "string", "description": "Email address (optional)"},
+		"comment":   map[string]any{"type": "string", "description": "Comment (optional)"},
+		"firstname": map[string]any{"type": "string", "description": "First name (optional)"},
+		"lastname":  map[string]any{"type": "string", "description": "Last name (optional)"},
+		"enable":    map[string]any{"type": "boolean", "description": "Enable/disable user (optional)"},
+		"expire":    map[string]any{"type": "integer", "description": "Expiration Unix timestamp (optional)"},
+	})
+	addTool("delete_user", "Delete a user", s.deleteUser, map[string]any{
+		"userid": map[string]any{"type": "string", "description": "User ID"},
+	})
+	addTool("change_password", "Change user password", s.changePassword, map[string]any{
+		"userid":   map[string]any{"type": "string", "description": "User ID"},
+		"password": map[string]any{"type": "string", "description": "New password"},
+	})
+	addTool("create_group", "Create a new user group", s.createGroup, map[string]any{
+		"groupid": map[string]any{"type": "string", "description": "Group ID"},
+		"comment": map[string]any{"type": "string", "description": "Comment (optional)"},
+	})
+	addTool("delete_group", "Delete a user group", s.deleteGroup, map[string]any{
+		"groupid": map[string]any{"type": "string", "description": "Group ID"},
+	})
+	addTool("create_role", "Create a new role with specific privileges", s.createRole, map[string]any{
+		"roleid": map[string]any{"type": "string", "description": "Role ID"},
+		"privs":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "List of privileges"},
+	})
+	addTool("delete_role", "Delete a role", s.deleteRole, map[string]any{
+		"roleid": map[string]any{"type": "string", "description": "Role ID"},
+	})
+	addTool("set_acl", "Create or update an access control list entry", s.setACL, map[string]any{
+		"path":      map[string]any{"type": "string", "description": "ACL path (e.g., /vms, /nodes)"},
+		"role":      map[string]any{"type": "string", "description": "Role ID"},
+		"userid":    map[string]any{"type": "string", "description": "User ID (optional)"},
+		"groupid":   map[string]any{"type": "string", "description": "Group ID (optional)"},
+		"tokenid":   map[string]any{"type": "string", "description": "Token ID (optional)"},
+		"propagate": map[string]any{"type": "boolean", "description": "Propagate permissions down tree (optional)"},
+	})
+	addTool("create_api_token", "Create a new API token for a user", s.createAPIToken, map[string]any{
+		"userid":  map[string]any{"type": "string", "description": "User ID"},
+		"tokenid": map[string]any{"type": "string", "description": "Token ID"},
+		"expire":  map[string]any{"type": "integer", "description": "Expiration Unix timestamp (optional)"},
+		"privsep": map[string]any{"type": "boolean", "description": "Separate privileges (optional)"},
+	})
+	addTool("delete_api_token", "Delete an API token", s.deleteAPIToken, map[string]any{
+		"userid":  map[string]any{"type": "string", "description": "User ID"},
+		"tokenid": map[string]any{"type": "string", "description": "Token ID"},
+	})
+
+	// Backup & Restore - Query
+	addTool("list_backups", "List available backups in storage", s.listBackups, map[string]any{
+		"storage": map[string]any{"type": "string", "description": "Storage device ID"},
+	})
+
+	// Backup & Restore - Control
+	addTool("create_vm_backup", "Create a backup of a virtual machine", s.createVMBackup, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+		"storage":   map[string]any{"type": "string", "description": "Storage device ID"},
+		"backup_id": map[string]any{"type": "string", "description": "Backup ID (optional)"},
+		"notes":     map[string]any{"type": "string", "description": "Backup notes (optional)"},
+	})
+	addTool("create_container_backup", "Create a backup of a container", s.createContainerBackup, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Node name"},
+		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
+		"storage":      map[string]any{"type": "string", "description": "Storage device ID"},
+		"backup_id":    map[string]any{"type": "string", "description": "Backup ID (optional)"},
+		"notes":        map[string]any{"type": "string", "description": "Backup notes (optional)"},
+	})
+	addTool("delete_backup", "Delete a backup file", s.deleteBackup, map[string]any{
+		"storage":   map[string]any{"type": "string", "description": "Storage device ID"},
+		"backup_id": map[string]any{"type": "string", "description": "Backup ID/filename"},
+	})
+	addTool("restore_vm_backup", "Restore a virtual machine from a backup", s.restoreVMBackup, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+		"backup_id": map[string]any{"type": "string", "description": "Backup ID/filename"},
+		"storage":   map[string]any{"type": "string", "description": "Storage device ID"},
+	})
+	addTool("restore_container_backup", "Restore a container from a backup", s.restoreContainerBackup, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+		"backup_id": map[string]any{"type": "string", "description": "Backup ID/filename"},
+		"storage":   map[string]any{"type": "string", "description": "Storage device ID"},
+	})
+
 	for _, tool := range tools {
 		s.server.AddTool(tool.Tool, tool.Handler)
 	}
-	s.logger.Info("Registered 21 tools")
+	s.logger.Info("Registered 48 tools")
 }
 
 // ServeStdio starts the MCP server with stdio transport
@@ -505,5 +608,627 @@ func (s *Server) rebootContainer(ctx context.Context, request mcp.CallToolReques
 		"container_id": containerID,
 		"node":         nodeName,
 		"result":       result,
+	})
+}
+
+// ============ USER MANAGEMENT ============
+
+// listUsers handles the list_users tool
+func (s *Server) listUsers(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_users")
+
+	users, err := s.proxmoxClient.ListUsers(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list users: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"users": users,
+		"count": len(users),
+	})
+}
+
+// getUser handles the get_user tool
+func (s *Server) getUser(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_user")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	user, err := s.proxmoxClient.GetUser(ctx, userID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get user: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(user)
+}
+
+// createUser handles the create_user tool
+func (s *Server) createUser(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_user")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	password := request.GetString("password", "")
+	if password == "" {
+		return mcp.NewToolResultError("password parameter is required"), nil
+	}
+
+	email := request.GetString("email", "")
+	comment := request.GetString("comment", "")
+
+	result, err := s.proxmoxClient.CreateUser(ctx, userID, password, email, comment)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create user: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "create",
+		"userid":  userID,
+		"message": "User created successfully",
+		"result":  result,
+	})
+}
+
+// updateUser handles the update_user tool
+func (s *Server) updateUser(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: update_user")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	email := request.GetString("email", "")
+	comment := request.GetString("comment", "")
+	firstName := request.GetString("firstname", "")
+	lastName := request.GetString("lastname", "")
+	enable := request.GetBool("enable", true)
+	expire := int64(request.GetInt("expire", 0))
+
+	result, err := s.proxmoxClient.UpdateUser(ctx, userID, email, comment, firstName, lastName, enable, expire)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to update user: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "update",
+		"userid":  userID,
+		"message": "User updated successfully",
+		"result":  result,
+	})
+}
+
+// deleteUser handles the delete_user tool
+func (s *Server) deleteUser(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_user")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeleteUser(ctx, userID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete user: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "delete",
+		"userid":  userID,
+		"message": "User deleted successfully",
+		"result":  result,
+	})
+}
+
+// changePassword handles the change_password tool
+func (s *Server) changePassword(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: change_password")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	password := request.GetString("password", "")
+	if password == "" {
+		return mcp.NewToolResultError("password parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.ChangePassword(ctx, userID, password)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to change password: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "change_password",
+		"userid":  userID,
+		"message": "Password changed successfully",
+		"result":  result,
+	})
+}
+
+// listGroups handles the list_groups tool
+func (s *Server) listGroups(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_groups")
+
+	groups, err := s.proxmoxClient.ListGroups(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list groups: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"groups": groups,
+		"count":  len(groups),
+	})
+}
+
+// createGroup handles the create_group tool
+func (s *Server) createGroup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_group")
+
+	groupID := request.GetString("groupid", "")
+	if groupID == "" {
+		return mcp.NewToolResultError("groupid parameter is required"), nil
+	}
+
+	comment := request.GetString("comment", "")
+
+	result, err := s.proxmoxClient.CreateGroup(ctx, groupID, comment)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create group: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "create",
+		"groupid": groupID,
+		"message": "Group created successfully",
+		"result":  result,
+	})
+}
+
+// deleteGroup handles the delete_group tool
+func (s *Server) deleteGroup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_group")
+
+	groupID := request.GetString("groupid", "")
+	if groupID == "" {
+		return mcp.NewToolResultError("groupid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeleteGroup(ctx, groupID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete group: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "delete",
+		"groupid": groupID,
+		"message": "Group deleted successfully",
+		"result":  result,
+	})
+}
+
+// listRoles handles the list_roles tool
+func (s *Server) listRoles(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_roles")
+
+	roles, err := s.proxmoxClient.ListRoles(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list roles: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"roles": roles,
+		"count": len(roles),
+	})
+}
+
+// createRole handles the create_role tool
+func (s *Server) createRole(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_role")
+
+	roleID := request.GetString("roleid", "")
+	if roleID == "" {
+		return mcp.NewToolResultError("roleid parameter is required"), nil
+	}
+
+	// Parse privileges - for simplicity, accept a space-separated string or array
+	privs := []string{}
+
+	// Try to get as string first (space-separated)
+	if privStr := request.GetString("privs", ""); privStr != "" {
+		// If it's a string, it might be space-separated
+		privsList := splitPrivileges(privStr)
+		privs = privsList
+	}
+
+	result, err := s.proxmoxClient.CreateRole(ctx, roleID, privs)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create role: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "create",
+		"roleid":  roleID,
+		"message": "Role created successfully",
+		"result":  result,
+	})
+}
+
+// Helper function to split privileges string
+func splitPrivileges(privStr string) []string {
+	if privStr == "" {
+		return []string{}
+	}
+	// For now, assume space-separated or comma-separated
+	parts := make([]string, 0)
+	current := ""
+	for _, ch := range privStr {
+		if ch == ' ' || ch == ',' {
+			if current != "" {
+				parts = append(parts, current)
+				current = ""
+			}
+		} else {
+			current += string(ch)
+		}
+	}
+	if current != "" {
+		parts = append(parts, current)
+	}
+	return parts
+}
+
+// deleteRole handles the delete_role tool
+func (s *Server) deleteRole(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_role")
+
+	roleID := request.GetString("roleid", "")
+	if roleID == "" {
+		return mcp.NewToolResultError("roleid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeleteRole(ctx, roleID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete role: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "delete",
+		"roleid":  roleID,
+		"message": "Role deleted successfully",
+		"result":  result,
+	})
+}
+
+// listACLs handles the list_acl tool
+func (s *Server) listACLs(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_acl")
+
+	acls, err := s.proxmoxClient.ListACLs(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list ACLs: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"acls":  acls,
+		"count": len(acls),
+	})
+}
+
+// setACL handles the set_acl tool
+func (s *Server) setACL(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: set_acl")
+
+	path := request.GetString("path", "")
+	if path == "" {
+		return mcp.NewToolResultError("path parameter is required"), nil
+	}
+
+	role := request.GetString("role", "")
+	if role == "" {
+		return mcp.NewToolResultError("role parameter is required"), nil
+	}
+
+	userID := request.GetString("userid", "")
+	groupID := request.GetString("groupid", "")
+	tokenID := request.GetString("tokenid", "")
+	propagate := request.GetBool("propagate", true)
+
+	if userID == "" && groupID == "" && tokenID == "" {
+		return mcp.NewToolResultError("At least one of userid, groupid, or tokenid is required"), nil
+	}
+
+	result, err := s.proxmoxClient.SetACL(ctx, path, role, userID, groupID, tokenID, propagate)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to set ACL: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":    "set_acl",
+		"path":      path,
+		"role":      role,
+		"propagate": propagate,
+		"message":   "ACL set successfully",
+		"result":    result,
+	})
+}
+
+// listAPITokens handles the list_api_tokens tool
+func (s *Server) listAPITokens(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_api_tokens")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	tokens, err := s.proxmoxClient.ListAPITokens(ctx, userID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list API tokens: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"tokens": tokens,
+		"userid": userID,
+		"count":  len(tokens),
+	})
+}
+
+// createAPIToken handles the create_api_token tool
+func (s *Server) createAPIToken(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_api_token")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	tokenID := request.GetString("tokenid", "")
+	if tokenID == "" {
+		return mcp.NewToolResultError("tokenid parameter is required"), nil
+	}
+
+	expire := int64(request.GetInt("expire", 0))
+	privSep := request.GetBool("privsep", false)
+
+	result, err := s.proxmoxClient.CreateAPIToken(ctx, userID, tokenID, expire, privSep)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create API token: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "create",
+		"userid":  userID,
+		"tokenid": tokenID,
+		"message": "API token created successfully",
+		"result":  result,
+	})
+}
+
+// deleteAPIToken handles the delete_api_token tool
+func (s *Server) deleteAPIToken(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_api_token")
+
+	userID := request.GetString("userid", "")
+	if userID == "" {
+		return mcp.NewToolResultError("userid parameter is required"), nil
+	}
+
+	tokenID := request.GetString("tokenid", "")
+	if tokenID == "" {
+		return mcp.NewToolResultError("tokenid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeleteAPIToken(ctx, userID, tokenID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete API token: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "delete",
+		"userid":  userID,
+		"tokenid": tokenID,
+		"message": "API token deleted successfully",
+		"result":  result,
+	})
+}
+
+// ============ BACKUP & RESTORE ============
+
+// listBackups handles the list_backups tool
+func (s *Server) listBackups(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_backups")
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	backups, err := s.proxmoxClient.ListBackups(ctx, storage)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list backups: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"backups": backups,
+		"storage": storage,
+		"count":   len(backups),
+	})
+}
+
+// createVMBackup handles the create_vm_backup tool
+func (s *Server) createVMBackup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_vm_backup")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	backupID := request.GetString("backup_id", "")
+	notes := request.GetString("notes", "")
+
+	result, err := s.proxmoxClient.CreateVMBackup(ctx, nodeName, vmID, storage, backupID, notes)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create VM backup: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":  "backup",
+		"vmid":    vmID,
+		"node":    nodeName,
+		"storage": storage,
+		"message": "VM backup started",
+		"result":  result,
+	})
+}
+
+// createContainerBackup handles the create_container_backup tool
+func (s *Server) createContainerBackup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_container_backup")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID <= 0 {
+		return mcp.NewToolResultError("container_id parameter is required and must be a positive integer"), nil
+	}
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	backupID := request.GetString("backup_id", "")
+	notes := request.GetString("notes", "")
+
+	result, err := s.proxmoxClient.CreateContainerBackup(ctx, nodeName, containerID, storage, backupID, notes)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create container backup: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":       "backup",
+		"container_id": containerID,
+		"node":         nodeName,
+		"storage":      storage,
+		"message":      "Container backup started",
+		"result":       result,
+	})
+}
+
+// deleteBackup handles the delete_backup tool
+func (s *Server) deleteBackup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_backup")
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	backupID := request.GetString("backup_id", "")
+	if backupID == "" {
+		return mcp.NewToolResultError("backup_id parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DeleteBackup(ctx, storage, backupID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete backup: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":    "delete",
+		"storage":   storage,
+		"backup_id": backupID,
+		"message":   "Backup deleted successfully",
+		"result":    result,
+	})
+}
+
+// restoreVMBackup handles the restore_vm_backup tool
+func (s *Server) restoreVMBackup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: restore_vm_backup")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	backupID := request.GetString("backup_id", "")
+	if backupID == "" {
+		return mcp.NewToolResultError("backup_id parameter is required"), nil
+	}
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.RestoreVMBackup(ctx, nodeName, backupID, storage)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to restore VM backup: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":    "restore",
+		"node":      nodeName,
+		"backup_id": backupID,
+		"storage":   storage,
+		"message":   "VM restore started",
+		"result":    result,
+	})
+}
+
+// restoreContainerBackup handles the restore_container_backup tool
+func (s *Server) restoreContainerBackup(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: restore_container_backup")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	backupID := request.GetString("backup_id", "")
+	if backupID == "" {
+		return mcp.NewToolResultError("backup_id parameter is required"), nil
+	}
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.RestoreContainerBackup(ctx, nodeName, backupID, storage)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to restore container backup: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":    "restore",
+		"node":      nodeName,
+		"backup_id": backupID,
+		"storage":   storage,
+		"message":   "Container restore started",
+		"result":    result,
 	})
 }

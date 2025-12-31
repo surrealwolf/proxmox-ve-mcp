@@ -1,0 +1,1166 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Proxmox VE API",
+    "description": "Complete REST API specification for Proxmox VE",
+    "version": "9.1.2",
+    "contact": {
+      "name": "Proxmox Server Solutions GmbH",
+      "email": "support@proxmox.com",
+      "url": "https://www.proxmox.com"
+    },
+    "license": {
+      "name": "AGPL-3.0",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}:{port}/api2/json",
+      "description": "Proxmox VE API endpoint",
+      "variables": {
+        "host": {
+          "description": "Proxmox host address",
+          "default": "localhost"
+        },
+        "port": {
+          "description": "API port (typically 8006)",
+          "default": "8006"
+        }
+      }
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "pveAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Proxmox VE API Token or Session ID. Format: 'PVEAPIToken=USER@REALM!TOKENID=UUID' or session cookie"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "userid": {
+            "type": "string",
+            "description": "User identifier in format username@realm",
+            "example": "user@pve"
+          },
+          "enable": {
+            "type": "boolean",
+            "description": "Whether user is enabled"
+          },
+          "expire": {
+            "type": "integer",
+            "description": "Unix timestamp when user expires"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Group memberships"
+          }
+        }
+      },
+      "APIToken": {
+        "type": "object",
+        "properties": {
+          "tokenid": {
+            "type": "string",
+            "description": "API token identifier",
+            "example": "user@pve!tokenname"
+          },
+          "expire": {
+            "type": "integer",
+            "description": "Unix timestamp when token expires"
+          },
+          "privsep": {
+            "type": "boolean",
+            "description": "Whether token has separate privileges"
+          },
+          "value": {
+            "type": "string",
+            "description": "Token secret (only returned on creation)"
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "groupid": {
+            "type": "string",
+            "description": "Group identifier"
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "roleid": {
+            "type": "string",
+            "description": "Role identifier"
+          },
+          "privs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of privileges for this role"
+          }
+        }
+      },
+      "Node": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "Node name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["online", "offline"],
+            "description": "Node status"
+          },
+          "uptime": {
+            "type": "integer",
+            "description": "Uptime in seconds"
+          },
+          "cpu": {
+            "type": "number",
+            "description": "CPU usage (0-1)"
+          },
+          "maxcpu": {
+            "type": "integer",
+            "description": "Maximum CPU cores"
+          },
+          "mem": {
+            "type": "integer",
+            "description": "Used memory in bytes"
+          },
+          "maxmem": {
+            "type": "integer",
+            "description": "Total memory in bytes"
+          },
+          "disk": {
+            "type": "integer",
+            "description": "Used disk space in bytes"
+          },
+          "maxdisk": {
+            "type": "integer",
+            "description": "Total disk space in bytes"
+          }
+        }
+      },
+      "VM": {
+        "type": "object",
+        "properties": {
+          "vmid": {
+            "type": "integer",
+            "description": "Virtual machine ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Virtual machine name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["running", "stopped", "paused"],
+            "description": "VM status"
+          },
+          "uptime": {
+            "type": "integer",
+            "description": "Uptime in seconds"
+          },
+          "node": {
+            "type": "string",
+            "description": "Node where VM is running"
+          },
+          "pid": {
+            "type": "integer",
+            "description": "Process ID"
+          },
+          "cpu": {
+            "type": "number",
+            "description": "CPU usage (0-1)"
+          },
+          "maxcpu": {
+            "type": "integer",
+            "description": "CPU cores"
+          },
+          "mem": {
+            "type": "integer",
+            "description": "Used memory in bytes"
+          },
+          "maxmem": {
+            "type": "integer",
+            "description": "Maximum memory in bytes"
+          },
+          "disk": {
+            "type": "integer",
+            "description": "Disk usage in bytes"
+          },
+          "maxdisk": {
+            "type": "integer",
+            "description": "Maximum disk size in bytes"
+          }
+        }
+      },
+      "Container": {
+        "type": "object",
+        "properties": {
+          "vmid": {
+            "type": "integer",
+            "description": "Container ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Container name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["running", "stopped"],
+            "description": "Container status"
+          },
+          "uptime": {
+            "type": "integer",
+            "description": "Uptime in seconds"
+          },
+          "node": {
+            "type": "string",
+            "description": "Node where container is running"
+          },
+          "cpu": {
+            "type": "number",
+            "description": "CPU usage (0-1)"
+          },
+          "maxcpu": {
+            "type": "integer",
+            "description": "CPU cores"
+          },
+          "mem": {
+            "type": "integer",
+            "description": "Used memory in bytes"
+          },
+          "maxmem": {
+            "type": "integer",
+            "description": "Maximum memory in bytes"
+          },
+          "disk": {
+            "type": "integer",
+            "description": "Disk usage in bytes"
+          },
+          "maxdisk": {
+            "type": "integer",
+            "description": "Maximum disk size in bytes"
+          }
+        }
+      },
+      "Storage": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "string",
+            "description": "Storage identifier"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["dir", "lvmthin", "lvmpv", "nfs", "cifs", "cephfs", "rbd"],
+            "description": "Storage type"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "used": {
+            "type": "integer",
+            "description": "Used space in bytes"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total space in bytes"
+          },
+          "avail": {
+            "type": "integer",
+            "description": "Available space in bytes"
+          }
+        }
+      },
+      "Privilege": {
+        "type": "string",
+        "enum": [
+          "Group.Allocate",
+          "Mapping.Audit",
+          "Mapping.Modify",
+          "Mapping.Use",
+          "Permissions.Modify",
+          "Pool.Allocate",
+          "Pool.Audit",
+          "Realm.AllocateUser",
+          "Realm.Allocate",
+          "SDN.Allocate",
+          "SDN.Audit",
+          "SDN.Use",
+          "Sys.Audit",
+          "Sys.Console",
+          "Sys.Incoming",
+          "Sys.Modify",
+          "Sys.PowerMgmt",
+          "Sys.Syslog",
+          "User.Modify",
+          "VM.Allocate",
+          "VM.Audit",
+          "VM.Backup",
+          "VM.Clone",
+          "VM.Config.CDROM",
+          "VM.Config.CPU",
+          "VM.Config.Cloudinit",
+          "VM.Config.Disk",
+          "VM.Config.HWType",
+          "VM.Config.Memory",
+          "VM.Config.Network",
+          "VM.Config.Options",
+          "VM.Console",
+          "VM.GuestAgent.Audit",
+          "VM.GuestAgent.FileRead",
+          "VM.GuestAgent.FileSystemMgmt",
+          "VM.GuestAgent.FileWrite",
+          "VM.GuestAgent.Unrestricted",
+          "VM.Migrate",
+          "VM.PowerMgmt",
+          "VM.Replicate",
+          "VM.Snapshot.Rollback",
+          "VM.Snapshot",
+          "Datastore.Allocate",
+          "Datastore.AllocateSpace",
+          "Datastore.AllocateTemplate",
+          "Datastore.Audit"
+        ]
+      },
+      "ACLPath": {
+        "type": "string",
+        "enum": [
+          "/",
+          "/access",
+          "/access/groups",
+          "/access/realms/{realmid}",
+          "/nodes",
+          "/nodes/{node}",
+          "/nodes/{node}/qemu",
+          "/nodes/{node}/lxc",
+          "/vms",
+          "/vms/{vmid}",
+          "/storage",
+          "/storage/{storeid}",
+          "/pool",
+          "/pool/{poolid}"
+        ],
+        "description": "ACL permission paths"
+      }
+    }
+  },
+  "paths": {
+    "/version": {
+      "get": {
+        "summary": "Get API version",
+        "tags": ["Cluster"],
+        "operationId": "getVersion",
+        "responses": {
+          "200": {
+            "description": "API version information"
+          }
+        }
+      }
+    },
+    "/access": {
+      "get": {
+        "summary": "Access management root",
+        "tags": ["Access"],
+        "operationId": "getAccess"
+      }
+    },
+    "/access/users": {
+      "get": {
+        "summary": "List all users",
+        "tags": ["Users"],
+        "operationId": "listUsers",
+        "security": [{"pveAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/User"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "tags": ["Users"],
+        "operationId": "createUser",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["userid"],
+                "properties": {
+                  "userid": {
+                    "type": "string",
+                    "description": "User ID in format username@realm"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Initial password"
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "firstname": {
+                    "type": "string"
+                  },
+                  "lastname": {
+                    "type": "string"
+                  },
+                  "enable": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "expire": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access/users/{userid}": {
+      "get": {
+        "summary": "Get user details",
+        "tags": ["Users"],
+        "operationId": "getUser",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "userid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"},
+            "description": "User ID"
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update user",
+        "tags": ["Users"],
+        "operationId": "updateUser",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "userid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment": {"type": "string"},
+                  "email": {"type": "string"},
+                  "firstname": {"type": "string"},
+                  "lastname": {"type": "string"},
+                  "enable": {"type": "boolean"},
+                  "expire": {"type": "integer"},
+                  "group": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user",
+        "tags": ["Users"],
+        "operationId": "deleteUser",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "userid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ]
+      }
+    },
+    "/access/password": {
+      "put": {
+        "summary": "Change user password",
+        "tags": ["Users"],
+        "operationId": "changePassword",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["password"],
+                "properties": {
+                  "userid": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access/groups": {
+      "get": {
+        "summary": "List all groups",
+        "tags": ["Groups"],
+        "operationId": "listGroups",
+        "security": [{"pveAuth": []}]
+      },
+      "post": {
+        "summary": "Create a new group",
+        "tags": ["Groups"],
+        "operationId": "createGroup",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["groupid"],
+                "properties": {
+                  "groupid": {
+                    "type": "string"
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access/roles": {
+      "get": {
+        "summary": "List all roles",
+        "tags": ["Roles"],
+        "operationId": "listRoles",
+        "security": [{"pveAuth": []}]
+      },
+      "post": {
+        "summary": "Create a new role",
+        "tags": ["Roles"],
+        "operationId": "createRole",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["roleid"],
+                "properties": {
+                  "roleid": {
+                    "type": "string"
+                  },
+                  "privs": {
+                    "type": "string",
+                    "description": "Space-separated list of privileges"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access/acl": {
+      "get": {
+        "summary": "List ACLs",
+        "tags": ["ACL"],
+        "operationId": "listACLs",
+        "security": [{"pveAuth": []}]
+      },
+      "put": {
+        "summary": "Create or update ACL entry",
+        "tags": ["ACL"],
+        "operationId": "updateACL",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["path", "role"],
+                "properties": {
+                  "path": {
+                    "$ref": "#/components/schemas/ACLPath"
+                  },
+                  "role": {
+                    "type": "string",
+                    "description": "Role ID"
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "User ID"
+                  },
+                  "group": {
+                    "type": "string",
+                    "description": "Group ID"
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "Token ID"
+                  },
+                  "propagate": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cluster": {
+      "get": {
+        "summary": "Cluster information",
+        "tags": ["Cluster"],
+        "operationId": "getCluster",
+        "security": [{"pveAuth": []}]
+      }
+    },
+    "/cluster/resources": {
+      "get": {
+        "summary": "List cluster resources",
+        "tags": ["Cluster"],
+        "operationId": "listClusterResources",
+        "security": [{"pveAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of cluster resources (nodes, VMs, containers, storage)"
+          }
+        }
+      }
+    },
+    "/nodes": {
+      "get": {
+        "summary": "List all nodes",
+        "tags": ["Nodes"],
+        "operationId": "listNodes",
+        "security": [{"pveAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/Node"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nodes/{node}": {
+      "get": {
+        "summary": "Get node information",
+        "tags": ["Nodes"],
+        "operationId": "getNode",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"},
+            "description": "Node name"
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/status": {
+      "get": {
+        "summary": "Get node status",
+        "tags": ["Nodes"],
+        "operationId": "getNodeStatus",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/qemu": {
+      "get": {
+        "summary": "List VMs on node",
+        "tags": ["Virtual Machines"],
+        "operationId": "listVMs",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of VMs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/VM"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nodes/{node}/qemu/{vmid}": {
+      "get": {
+        "summary": "Get VM details",
+        "tags": ["Virtual Machines"],
+        "operationId": "getVM",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/qemu/{vmid}/status": {
+      "get": {
+        "summary": "Get VM status",
+        "tags": ["Virtual Machines"],
+        "operationId": "getVMStatus",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/qemu/{vmid}/status/start": {
+      "post": {
+        "summary": "Start VM",
+        "tags": ["Virtual Machines"],
+        "operationId": "startVM",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/qemu/{vmid}/status/stop": {
+      "post": {
+        "summary": "Stop VM",
+        "tags": ["Virtual Machines"],
+        "operationId": "stopVM",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/qemu/{vmid}/status/shutdown": {
+      "post": {
+        "summary": "Graceful shutdown VM",
+        "tags": ["Virtual Machines"],
+        "operationId": "shutdownVM",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "timeout": {
+                    "type": "integer",
+                    "description": "Timeout in seconds"
+                  },
+                  "forceStop": {
+                    "type": "boolean",
+                    "description": "Force stop after timeout"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nodes/{node}/lxc": {
+      "get": {
+        "summary": "List containers on node",
+        "tags": ["Containers"],
+        "operationId": "listContainers",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of containers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/Container"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}": {
+      "get": {
+        "summary": "Get container details",
+        "tags": ["Containers"],
+        "operationId": "getContainer",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}/status": {
+      "get": {
+        "summary": "Get container status",
+        "tags": ["Containers"],
+        "operationId": "getContainerStatus",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}/status/start": {
+      "post": {
+        "summary": "Start container",
+        "tags": ["Containers"],
+        "operationId": "startContainer",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}/status/stop": {
+      "post": {
+        "summary": "Stop container",
+        "tags": ["Containers"],
+        "operationId": "stopContainer",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}/status/shutdown": {
+      "post": {
+        "summary": "Graceful shutdown container",
+        "tags": ["Containers"],
+        "operationId": "shutdownContainer",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/nodes/{node}/lxc/{vmid}/status/reboot": {
+      "post": {
+        "summary": "Reboot container",
+        "tags": ["Containers"],
+        "operationId": "rebootContainer",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "node",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "vmid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ]
+      }
+    },
+    "/storage": {
+      "get": {
+        "summary": "List storage devices",
+        "tags": ["Storage"],
+        "operationId": "listStorage",
+        "security": [{"pveAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of storage devices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/Storage"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pools": {
+      "get": {
+        "summary": "List resource pools",
+        "tags": ["Pools"],
+        "operationId": "listPools",
+        "security": [{"pveAuth": []}]
+      },
+      "post": {
+        "summary": "Create resource pool",
+        "tags": ["Pools"],
+        "operationId": "createPool",
+        "security": [{"pveAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["poolid"],
+                "properties": {
+                  "poolid": {
+                    "type": "string",
+                    "description": "Pool ID"
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pools/{poolid}": {
+      "get": {
+        "summary": "Get pool details",
+        "tags": ["Pools"],
+        "operationId": "getPool",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "poolid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update pool",
+        "tags": ["Pools"],
+        "operationId": "updatePool",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "poolid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete pool",
+        "tags": ["Pools"],
+        "operationId": "deletePool",
+        "security": [{"pveAuth": []}],
+        "parameters": [
+          {
+            "name": "poolid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ]
+      }
+    }
+  }
+}
