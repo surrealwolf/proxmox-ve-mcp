@@ -456,6 +456,67 @@ func (c *Client) RebootContainer(ctx context.Context, nodeName string, container
 	return data, nil
 }
 
+// GetContainerConfig returns the configuration of a specific container
+func (c *Client) GetContainerConfig(ctx context.Context, nodeName string, containerID int) (map[string]interface{}, error) {
+	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/lxc/%d/config", nodeName, containerID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container config: %w", err)
+	}
+
+	var config map[string]interface{}
+	if jsonMap, ok := data.(map[string]interface{}); ok {
+		config = jsonMap
+	} else {
+		return nil, fmt.Errorf("invalid container config response format")
+	}
+
+	return config, nil
+}
+
+// DeleteContainer removes an LXC container
+func (c *Client) DeleteContainer(ctx context.Context, nodeName string, containerID int, force bool) (interface{}, error) {
+	body := map[string]interface{}{}
+	if force {
+		body["force"] = 1
+	}
+
+	return c.doRequest(ctx, "DELETE", fmt.Sprintf("nodes/%s/lxc/%d", nodeName, containerID), body)
+}
+
+// CreateContainer creates a new LXC container with the specified configuration
+func (c *Client) CreateContainer(ctx context.Context, nodeName string, config map[string]interface{}) (interface{}, error) {
+	// Ensure vmid is present in the config
+	if _, ok := config["vmid"]; !ok {
+		return nil, fmt.Errorf("vmid is required in container configuration")
+	}
+
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc", nodeName), config)
+}
+
+// CreateContainerFull creates a new container with detailed configuration
+// Params: vmid, hostname, storage, memory, cores, ostype (e.g., "debian"), osversion
+func (c *Client) CreateContainerFull(ctx context.Context, nodeName string, containerID int, hostname string, storage string, memory int, cores int, ostype string) (interface{}, error) {
+	config := map[string]interface{}{
+		"vmid":      containerID,
+		"hostname":  hostname,
+		"storage":   storage,
+		"memory":    memory,
+		"cores":     cores,
+		"ostype":    ostype,
+	}
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc", nodeName), config)
+}
+
+// CloneContainer clones an existing LXC container
+func (c *Client) CloneContainer(ctx context.Context, nodeName string, sourceContainerID int, newContainerID int, newHostname string, full bool) (interface{}, error) {
+	config := map[string]interface{}{
+		"vmid":     newContainerID,
+		"hostname": newHostname,
+		"full":     full,
+	}
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc/%d/clone", nodeName, sourceContainerID), config)
+}
+
 // GetVMConfig returns the configuration of a specific VM
 func (c *Client) GetVMConfig(ctx context.Context, nodeName string, vmID int) (map[string]interface{}, error) {
 	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/qemu/%d/config", nodeName, vmID), nil)

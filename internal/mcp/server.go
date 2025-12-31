@@ -160,6 +160,42 @@ func (s *Server) registerTools() {
 		"node_name":    map[string]any{"type": "string", "description": "Name of the node"},
 		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
 	})
+	addTool("get_container_config", "Get full configuration of a container", s.getContainerConfig, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Name of the node"},
+		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
+	})
+	addTool("delete_container", "Delete an LXC container", s.deleteContainer, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Name of the node"},
+		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
+		"force":        map[string]any{"type": "boolean", "description": "Force delete even if running (optional)"},
+	})
+	addTool("create_container", "Create a new LXC container", s.createContainer, map[string]any{
+		"node_name":   map[string]any{"type": "string", "description": "Name of the node"},
+		"container_id": map[string]any{"type": "integer", "description": "Container ID (must be unique)"},
+		"hostname":    map[string]any{"type": "string", "description": "Container hostname"},
+		"storage":     map[string]any{"type": "string", "description": "Storage device ID"},
+		"memory":      map[string]any{"type": "integer", "description": "Memory in MB (default: 512)"},
+		"cores":       map[string]any{"type": "integer", "description": "CPU cores (default: 1)"},
+		"ostype":      map[string]any{"type": "string", "description": "OS type (default: debian)"},
+	})
+	addTool("create_container_advanced", "Create a container with advanced configuration options", s.createContainerAdvanced, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Name of the node"},
+		"container_id":  map[string]any{"type": "integer", "description": "Container ID (must be unique)"},
+		"hostname":     map[string]any{"type": "string", "description": "Container hostname (optional)"},
+		"storage":      map[string]any{"type": "string", "description": "Storage device ID (optional)"},
+		"memory":       map[string]any{"type": "integer", "description": "Memory in MB (optional)"},
+		"cores":        map[string]any{"type": "integer", "description": "CPU cores (optional)"},
+		"ostype":       map[string]any{"type": "string", "description": "OS type (optional)"},
+		"net0":         map[string]any{"type": "string", "description": "Network configuration (e.g., name=eth0,bridge=vmbr0, optional)"},
+		"rootfs":       map[string]any{"type": "string", "description": "Root filesystem (e.g., local-lvm:10, optional)"},
+	})
+	addTool("clone_container", "Clone an existing LXC container", s.cloneContainer, map[string]any{
+		"node_name":           map[string]any{"type": "string", "description": "Name of the node"},
+		"source_container_id": map[string]any{"type": "integer", "description": "Source container ID to clone from"},
+		"new_container_id":    map[string]any{"type": "integer", "description": "New container ID (must be unique)"},
+		"new_hostname":        map[string]any{"type": "string", "description": "New container hostname"},
+		"full":                map[string]any{"type": "boolean", "description": "Full clone (default: true) vs linked clone"},
+	})
 
 	// User Management - Query
 	addTool("list_users", "List all users in the system", s.listUsers, map[string]any{})
@@ -264,7 +300,7 @@ func (s *Server) registerTools() {
 	for _, tool := range tools {
 		s.server.AddTool(tool.Tool, tool.Handler)
 	}
-	s.logger.Info("Registered 55 tools")
+	s.logger.Info("Registered 60 tools")
 }
 
 // ServeStdio starts the MCP server with stdio transport
@@ -960,6 +996,208 @@ func (s *Server) rebootContainer(ctx context.Context, request mcp.CallToolReques
 		"container_id": containerID,
 		"node":         nodeName,
 		"result":       result,
+	})
+}
+
+// getContainerConfig handles the get_container_config tool
+func (s *Server) getContainerConfig(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_container_config")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID <= 0 {
+		return mcp.NewToolResultError("container_id parameter is required and must be a positive integer"), nil
+	}
+
+	config, err := s.proxmoxClient.GetContainerConfig(ctx, nodeName, containerID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get container config: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"container_id": containerID,
+		"node":         nodeName,
+		"config":       config,
+	})
+}
+
+// deleteContainer handles the delete_container tool
+func (s *Server) deleteContainer(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_container")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID <= 0 {
+		return mcp.NewToolResultError("container_id parameter is required and must be a positive integer"), nil
+	}
+
+	force := request.GetBool("force", false)
+
+	result, err := s.proxmoxClient.DeleteContainer(ctx, nodeName, containerID, force)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete container: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":       "delete",
+		"container_id": containerID,
+		"node":         nodeName,
+		"force":        force,
+		"result":       result,
+	})
+}
+
+// createContainer handles the create_container tool
+func (s *Server) createContainer(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_container")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID <= 0 {
+		return mcp.NewToolResultError("container_id parameter is required and must be a positive integer"), nil
+	}
+
+	hostname := request.GetString("hostname", "")
+	if hostname == "" {
+		return mcp.NewToolResultError("hostname parameter is required"), nil
+	}
+
+	storage := request.GetString("storage", "")
+	if storage == "" {
+		return mcp.NewToolResultError("storage parameter is required"), nil
+	}
+
+	memory := request.GetInt("memory", 512)
+	cores := request.GetInt("cores", 1)
+	ostype := request.GetString("ostype", "debian")
+
+	result, err := s.proxmoxClient.CreateContainerFull(ctx, nodeName, containerID, hostname, storage, memory, cores, ostype)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create container: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":       "create",
+		"container_id": containerID,
+		"hostname":     hostname,
+		"node":         nodeName,
+		"config": map[string]interface{}{
+			"storage": storage,
+			"memory":  memory,
+			"cores":   cores,
+			"ostype":  ostype,
+		},
+		"result": result,
+	})
+}
+
+// createContainerAdvanced handles the create_container_advanced tool with full configuration
+func (s *Server) createContainerAdvanced(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_container_advanced")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID <= 0 {
+		return mcp.NewToolResultError("container_id parameter is required and must be a positive integer"), nil
+	}
+
+	// Build configuration from optional parameters
+	config := map[string]interface{}{
+		"vmid": containerID,
+	}
+
+	// Add optional parameters if provided
+	if hostname := request.GetString("hostname", ""); hostname != "" {
+		config["hostname"] = hostname
+	}
+	if storage := request.GetString("storage", ""); storage != "" {
+		config["storage"] = storage
+	}
+	if memory := request.GetInt("memory", 0); memory > 0 {
+		config["memory"] = memory
+	}
+	if cores := request.GetInt("cores", 0); cores > 0 {
+		config["cores"] = cores
+	}
+	if ostype := request.GetString("ostype", ""); ostype != "" {
+		config["ostype"] = ostype
+	}
+	if net0 := request.GetString("net0", ""); net0 != "" {
+		config["net0"] = net0
+	}
+	if rootfs := request.GetString("rootfs", ""); rootfs != "" {
+		config["rootfs"] = rootfs
+	}
+
+	result, err := s.proxmoxClient.CreateContainer(ctx, nodeName, config)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create container: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":       "create",
+		"container_id": containerID,
+		"node":         nodeName,
+		"config":       config,
+		"result":       result,
+	})
+}
+
+// cloneContainer handles the clone_container tool
+func (s *Server) cloneContainer(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: clone_container")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	sourceContainerID := request.GetInt("source_container_id", 0)
+	if sourceContainerID <= 0 {
+		return mcp.NewToolResultError("source_container_id parameter is required and must be a positive integer"), nil
+	}
+
+	newContainerID := request.GetInt("new_container_id", 0)
+	if newContainerID <= 0 {
+		return mcp.NewToolResultError("new_container_id parameter is required and must be a positive integer"), nil
+	}
+
+	newHostname := request.GetString("new_hostname", "")
+	if newHostname == "" {
+		return mcp.NewToolResultError("new_hostname parameter is required"), nil
+	}
+
+	full := request.GetBool("full", true)
+
+	result, err := s.proxmoxClient.CloneContainer(ctx, nodeName, sourceContainerID, newContainerID, newHostname, full)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to clone container: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":              "clone",
+		"source_container_id": sourceContainerID,
+		"new_container_id":    newContainerID,
+		"new_hostname":        newHostname,
+		"node":                nodeName,
+		"full_clone":          full,
+		"result":              result,
 	})
 }
 

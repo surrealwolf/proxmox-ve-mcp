@@ -10,10 +10,11 @@ Model Context Protocol (MCP) server for Proxmox Virtual Environment infrastructu
 
 ## Features
 
-- **55 management tools** across 6 operational categories
+- **60 management tools** across 6 operational categories
 - **User & Access Management**: 16 tools for users, groups, roles, and ACLs
 - **Backup & Restore Operations**: 6 tools for VM/container backup creation, management, and restoration
 - **VM Creation & Cloning**: 3 tools for creating and cloning virtual machines
+- **Container Creation & Cloning**: 5 tools for container management and lifecycle
 - **Advanced Cluster Management**: 6 tools for detailed cluster and status operations
 - **Cluster Management**: Monitor cluster health and node status
 - **Virtual Machine Management**: List, monitor, and manage VMs
@@ -84,7 +85,7 @@ curl -X POST http://localhost:8000/mcp \
 - `MCP_TRANSPORT`: Set to `"http"` for HTTP transport (default: `"stdio"`)
 - `MCP_HTTP_ADDR`: HTTP server address (default: `:8000`)
 
-## Available Tools (55 Total)
+## Available Tools (60 Total)
 
 ### User & Access Management (16 tools)
 - `list_users` - List all users in the system
@@ -135,13 +136,18 @@ curl -X POST http://localhost:8000/mcp \
 - `create_vm_advanced` - Create a VM with advanced configuration options
 - `clone_vm` - Clone an existing virtual machine
 
-### Container Management (7 tools)
+### Container Management (12 tools)
 - `get_containers` - List all containers on a specific node
 - `get_container_status` - Get detailed container information and status
+- `get_container_config` - Get full configuration of a container
 - `start_container` - Start an LXC container
 - `stop_container` - Stop an LXC container
 - `shutdown_container` - Gracefully shutdown an LXC container
 - `reboot_container` - Reboot a container
+- `delete_container` - Delete an LXC container (with optional force)
+- `create_container` - Create a new LXC container with basic configuration
+- `create_container_advanced` - Create a container with advanced configuration options
+- `clone_container` - Clone an existing LXC container
 
 ## Skills & Capabilities
 
