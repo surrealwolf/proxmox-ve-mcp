@@ -66,6 +66,41 @@ type Container struct {
 	Uptime  int64  `json:"uptime,omitempty"`
 }
 
+// Storage represents a storage device
+type Storage struct {
+	Storage string `json:"storage"`
+	Type    string `json:"type"`
+	Content string `json:"content,omitempty"`
+	Enabled int    `json:"enabled,omitempty"`
+	Used    int64  `json:"used,omitempty"`
+	Total   int64  `json:"total,omitempty"`
+}
+
+// NodeStatus represents detailed node status
+type NodeStatus struct {
+	Node      string  `json:"node"`
+	Status    string  `json:"status"`
+	Uptime    int64   `json:"uptime,omitempty"`
+	CPU       float64 `json:"cpu,omitempty"`
+	MaxCPU    int     `json:"maxcpu,omitempty"`
+	Memory    int64   `json:"memory,omitempty"`
+	MaxMemory int64   `json:"maxmemory,omitempty"`
+	Disk      int64   `json:"disk,omitempty"`
+	MaxDisk   int64   `json:"maxdisk,omitempty"`
+}
+
+// Task represents a background task
+type Task struct {
+	ID        string `json:"id"`
+	Node      string `json:"node"`
+	PID       int    `json:"pid,omitempty"`
+	PPID      int    `json:"ppid,omitempty"`
+	Starttime int64  `json:"starttime,omitempty"`
+	Type      string `json:"type,omitempty"`
+	User      string `json:"user,omitempty"`
+	Status    string `json:"status,omitempty"`
+}
+
 // Cluster represents cluster information
 type Cluster struct {
 	Name       string `json:"name"`
@@ -231,6 +266,141 @@ func (c *Client) GetContainer(ctx context.Context, nodeName string, containerID 
 	}
 
 	return &container, nil
+}
+
+// GetStorage retrieves storage information
+func (c *Client) GetStorage(ctx context.Context) ([]Storage, error) {
+	data, err := c.doRequest(ctx, "GET", "storage", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var storage []Storage
+	if err := json.Unmarshal(marshalJSON(data), &storage); err != nil {
+		return nil, fmt.Errorf("failed to parse storage: %w", err)
+	}
+
+	return storage, nil
+}
+
+// GetNodeStorage retrieves storage for a specific node
+func (c *Client) GetNodeStorage(ctx context.Context, nodeName string) ([]Storage, error) {
+	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/storage", nodeName), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var storage []Storage
+	if err := json.Unmarshal(marshalJSON(data), &storage); err != nil {
+		return nil, fmt.Errorf("failed to parse node storage: %w", err)
+	}
+
+	return storage, nil
+}
+
+// GetTasks retrieves cluster tasks
+func (c *Client) GetTasks(ctx context.Context) ([]Task, error) {
+	data, err := c.doRequest(ctx, "GET", "cluster/resources", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var tasks []Task
+	if err := json.Unmarshal(marshalJSON(data), &tasks); err != nil {
+		return nil, fmt.Errorf("failed to parse tasks: %w", err)
+	}
+
+	return tasks, nil
+}
+
+// GetClusterResources retrieves all cluster resources
+func (c *Client) GetClusterResources(ctx context.Context) (interface{}, error) {
+	data, err := c.doRequest(ctx, "GET", "cluster/resources", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// StartVM starts a virtual machine
+func (c *Client) StartVM(ctx context.Context, nodeName string, vmID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/status/start", nodeName, vmID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// StopVM stops a virtual machine
+func (c *Client) StopVM(ctx context.Context, nodeName string, vmID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/status/stop", nodeName, vmID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// RebootVM reboots a virtual machine
+func (c *Client) RebootVM(ctx context.Context, nodeName string, vmID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/status/reboot", nodeName, vmID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// ShutdownVM shuts down a virtual machine gracefully
+func (c *Client) ShutdownVM(ctx context.Context, nodeName string, vmID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/status/shutdown", nodeName, vmID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// StartContainer starts an LXC container
+func (c *Client) StartContainer(ctx context.Context, nodeName string, containerID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc/%d/status/start", nodeName, containerID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// StopContainer stops an LXC container
+func (c *Client) StopContainer(ctx context.Context, nodeName string, containerID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc/%d/status/stop", nodeName, containerID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// ShutdownContainer shuts down an LXC container gracefully
+func (c *Client) ShutdownContainer(ctx context.Context, nodeName string, containerID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc/%d/status/shutdown", nodeName, containerID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// RebootContainer reboots an LXC container
+func (c *Client) RebootContainer(ctx context.Context, nodeName string, containerID int) (interface{}, error) {
+	data, err := c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/lxc/%d/status/reboot", nodeName, containerID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // marshalJSON is a helper to convert interface{} to JSON bytes
