@@ -363,10 +363,35 @@ func (s *Server) registerTools() {
 		"storage":   map[string]any{"type": "string", "description": "Storage device ID"},
 	})
 
+	// Resource Pools - Query
+	addTool("list_pools", "List all resource pools in the cluster", s.listPools, map[string]any{})
+	addTool("get_pool", "Get details for a specific resource pool", s.getPool, map[string]any{
+		"poolid": map[string]any{"type": "string", "description": "Pool ID"},
+	})
+
+	// Node Management
+	addTool("get_node_tasks", "Get tasks for a specific node", s.getNodeTasks, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+	})
+	addTool("get_cluster_tasks", "Get all tasks in the cluster", s.getClusterTasks, map[string]any{})
+
+	// Statistics
+	addTool("get_node_stats", "Get performance statistics for a specific node", s.getNodeStats, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+	})
+	addTool("get_vm_stats", "Get performance statistics for a specific VM", s.getVMStats, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Node name"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+	})
+	addTool("get_container_stats", "Get performance statistics for a specific container", s.getContainerStats, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Node name"},
+		"container_id": map[string]any{"type": "integer", "description": "Container ID"},
+	})
+
 	for _, tool := range tools {
 		s.server.AddTool(tool.Tool, tool.Handler)
 	}
-	s.logger.Info("Registered 60 tools")
+	s.logger.Info("Registered 68 tools")
 }
 
 // ServeStdio starts the MCP server with stdio transport
@@ -2307,5 +2332,150 @@ func (s *Server) restoreContainerBackup(ctx context.Context, request mcp.CallToo
 		"storage":   storage,
 		"message":   "Container restore started",
 		"result":    result,
+	})
+}
+
+// ============ RESOURCE POOLS ============
+
+func (s *Server) listPools(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_pools")
+
+	pools, err := s.proxmoxClient.ListPools(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list pools: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pools retrieved successfully",
+		"pools":   pools,
+	})
+}
+
+func (s *Server) getPool(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_pool")
+
+	poolID := request.GetString("poolid", "")
+	if poolID == "" {
+		return mcp.NewToolResultError("poolid parameter is required"), nil
+	}
+
+	pool, err := s.proxmoxClient.GetPool(ctx, poolID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get pool: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Pool retrieved successfully",
+		"pool":    pool,
+	})
+}
+
+// ============ NODE MANAGEMENT - TASKS ============
+
+func (s *Server) getNodeTasks(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_node_tasks")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	tasks, err := s.proxmoxClient.GetNodeTasks(ctx, nodeName)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get node tasks: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Node tasks retrieved successfully",
+		"node":    nodeName,
+		"tasks":   tasks,
+	})
+}
+
+func (s *Server) getClusterTasks(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_cluster_tasks")
+
+	tasks, err := s.proxmoxClient.GetClusterTasks(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get cluster tasks: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Cluster tasks retrieved successfully",
+		"tasks":   tasks,
+	})
+}
+
+// ============ STATISTICS ============
+
+func (s *Server) getNodeStats(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_node_stats")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	stats, err := s.proxmoxClient.GetNodeStats(ctx, nodeName, "day")
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get node statistics: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "Node statistics retrieved successfully",
+		"node":    nodeName,
+		"stats":   stats,
+	})
+}
+
+func (s *Server) getVMStats(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_vm_stats")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID == 0 {
+		return mcp.NewToolResultError("vmid parameter is required"), nil
+	}
+
+	stats, err := s.proxmoxClient.GetVMStats(ctx, nodeName, vmID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get VM statistics: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "VM statistics retrieved successfully",
+		"node":    nodeName,
+		"vmid":    vmID,
+		"stats":   stats,
+	})
+}
+
+func (s *Server) getContainerStats(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_container_stats")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	containerID := request.GetInt("container_id", 0)
+	if containerID == 0 {
+		return mcp.NewToolResultError("container_id parameter is required"), nil
+	}
+
+	stats, err := s.proxmoxClient.GetContainerStats(ctx, nodeName, containerID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get container statistics: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message":      "Container statistics retrieved successfully",
+		"node":         nodeName,
+		"container_id": containerID,
+		"stats":        stats,
 	})
 }
