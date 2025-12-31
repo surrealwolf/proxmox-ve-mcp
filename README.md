@@ -4,6 +4,10 @@ Model Context Protocol (MCP) server for Proxmox Virtual Environment infrastructu
 
 **Focused on:** Comprehensive Proxmox infrastructure management including cluster operations, VM/container lifecycle, user access control, and backup/restore operations.
 
+⚠️ **Early Development Warning**: This project is in early development and may contain bugs that could cause unexpected behavior. Use with caution in production environments.
+
+⚠️ **Prompt Injection Risk**: You are responsible for guarding against prompt injection when using these tools. Exercise extreme caution or use MCP tools only on systems and data you trust.
+
 ## Features
 
 - **48 management tools** across 6 operational categories
@@ -162,3 +166,7 @@ MIT License - See LICENSE file for details
 For issues and questions:
 - Check the [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/index.html)
 - Review implementation examples in `internal/`
+
+---
+
+**Built with Claude Haiku 4.5** - Crafted by AI to extend your infrastructure possibilities. 🤖✨
