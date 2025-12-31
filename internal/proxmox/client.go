@@ -597,6 +597,93 @@ func (c *Client) UpdateContainer(ctx context.Context, nodeName string, container
 	return c.doRequest(ctx, "PUT", fmt.Sprintf("nodes/%s/lxc/%d/config", nodeName, containerID), config)
 }
 
+// GetVMConsole returns console access information for a VM
+func (c *Client) GetVMConsole(ctx context.Context, nodeName string, vmID int) (map[string]interface{}, error) {
+	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/qemu/%d/status/current", nodeName, vmID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get VM console: %w", err)
+	}
+	if result, ok := data.(map[string]interface{}); ok {
+		return result, nil
+	}
+	return nil, fmt.Errorf("invalid console response format")
+}
+
+// CreateVMSnapshot creates a snapshot of a virtual machine
+func (c *Client) CreateVMSnapshot(ctx context.Context, nodeName string, vmID int, snapName string, description string) (interface{}, error) {
+	config := map[string]interface{}{
+		"snapname": snapName,
+	}
+	if description != "" {
+		config["description"] = description
+	}
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/snapshot", nodeName, vmID), config)
+}
+
+// ListVMSnapshots lists all snapshots for a virtual machine
+func (c *Client) ListVMSnapshots(ctx context.Context, nodeName string, vmID int) ([]map[string]interface{}, error) {
+	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/qemu/%d/snapshot", nodeName, vmID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list VM snapshots: %w", err)
+	}
+
+	var snapshots []map[string]interface{}
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal snapshots: %w", err)
+	}
+	if err := json.Unmarshal(dataBytes, &snapshots); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal snapshots: %w", err)
+	}
+
+	return snapshots, nil
+}
+
+// DeleteVMSnapshot deletes a snapshot from a virtual machine
+func (c *Client) DeleteVMSnapshot(ctx context.Context, nodeName string, vmID int, snapName string, force bool) (interface{}, error) {
+	config := map[string]interface{}{}
+	if force {
+		config["force"] = 1
+	}
+	return c.doRequest(ctx, "DELETE", fmt.Sprintf("nodes/%s/qemu/%d/snapshot/%s", nodeName, vmID, snapName), config)
+}
+
+// RestoreVMSnapshot restores a virtual machine from a snapshot
+func (c *Client) RestoreVMSnapshot(ctx context.Context, nodeName string, vmID int, snapName string) (interface{}, error) {
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/snapshot/%s/rollback", nodeName, vmID, snapName), nil)
+}
+
+// GetVMFirewallRules retrieves firewall rules for a virtual machine
+func (c *Client) GetVMFirewallRules(ctx context.Context, nodeName string, vmID int) ([]map[string]interface{}, error) {
+	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/qemu/%d/firewall/rules", nodeName, vmID), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get VM firewall rules: %w", err)
+	}
+
+	var rules []map[string]interface{}
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal rules: %w", err)
+	}
+	if err := json.Unmarshal(dataBytes, &rules); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal rules: %w", err)
+	}
+
+	return rules, nil
+}
+
+// MigrateVM migrates a virtual machine to another node
+func (c *Client) MigrateVM(ctx context.Context, nodeName string, vmID int, targetNode string, online bool) (interface{}, error) {
+	config := map[string]interface{}{
+		"target": targetNode,
+	}
+	if online {
+		config["online"] = 1
+	}
+
+	return c.doRequest(ctx, "POST", fmt.Sprintf("nodes/%s/qemu/%d/migrate", nodeName, vmID), config)
+}
+
 // ============ USER & ACCESS MANAGEMENT ============
 
 // User represents a Proxmox user

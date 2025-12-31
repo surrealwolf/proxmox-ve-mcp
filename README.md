@@ -10,10 +10,12 @@ Model Context Protocol (MCP) server for Proxmox Virtual Environment infrastructu
 
 ## Features
 
-- **62 management tools** across 6 operational categories
+- **69 management tools** across 6 operational categories
 - **User & Access Management**: 16 tools for users, groups, roles, and ACLs
 - **Backup & Restore Operations**: 6 tools for VM/container backup creation, management, and restoration
 - **VM Creation & Cloning**: 4 tools for creating, cloning, and configuring virtual machines
+- **VM Snapshots & Backups**: 5 tools for creating, listing, restoring, and deleting VM snapshots
+- **VM Migration**: Tools for live and offline VM migration to other nodes
 - **Container Creation & Cloning**: 6 tools for container management and lifecycle
 - **Advanced Cluster Management**: 6 tools for detailed cluster and status operations
 - **VM Configuration Management**: Update VM configs, mark as template, manage settings
@@ -95,7 +97,7 @@ curl -X POST http://localhost:8000/mcp \
 - `MCP_TRANSPORT`: Set to `"http"` for HTTP transport (default: `"stdio"`)
 - `MCP_HTTP_ADDR`: HTTP server address (default: `:8000`)
 
-## Available Tools (60 Total)
+## Available Tools (69 Total)
 
 ### User & Access Management (16 tools)
 - `list_users` - List all users in the system
@@ -131,7 +133,7 @@ curl -X POST http://localhost:8000/mcp \
 - `get_storage` - List all storage devices in the cluster
 - `get_node_storage` - Get storage devices for a specific node
 
-### Virtual Machine Management (14 tools)
+### Virtual Machine Management (21 tools)
 - `get_vms` - List all VMs on a specific node
 - `get_vm_status` - Get detailed VM information and status
 - `get_vm_config` - Get full configuration of a virtual machine
@@ -146,6 +148,13 @@ curl -X POST http://localhost:8000/mcp \
 - `create_vm_advanced` - Create a VM with advanced configuration options
 - `clone_vm` - Clone an existing virtual machine
 - `update_vm_config` - Update VM configuration (mark as template, adjust resources, etc.)
+- `get_vm_console` - Get console access information for a VM
+- `create_vm_snapshot` - Create a snapshot of a virtual machine
+- `list_vm_snapshots` - List all snapshots for a virtual machine
+- `delete_vm_snapshot` - Delete a snapshot from a virtual machine
+- `restore_vm_snapshot` - Restore a virtual machine from a snapshot
+- `get_vm_firewall_rules` - Get firewall rules for a virtual machine
+- `migrate_vm` - Migrate a virtual machine to another node
 
 ### Container Management (13 tools)
 - `get_containers` - List all containers on a specific node

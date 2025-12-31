@@ -138,6 +138,41 @@ func (s *Server) registerTools() {
 		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
 		"config":    map[string]any{"type": "object", "description": "Configuration to update (e.g., {\"template\": 1} to mark as template)"},
 	})
+	addTool("get_vm_console", "Get console access information for a VM", s.getVMConsole, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+	})
+	addTool("create_vm_snapshot", "Create a snapshot of a virtual machine", s.createVMSnapshot, map[string]any{
+		"node_name":    map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":         map[string]any{"type": "integer", "description": "VM ID"},
+		"snap_name":    map[string]any{"type": "string", "description": "Snapshot name"},
+		"description":  map[string]any{"type": "string", "description": "Snapshot description (optional)"},
+	})
+	addTool("list_vm_snapshots", "List all snapshots for a virtual machine", s.listVMSnapshots, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+	})
+	addTool("delete_vm_snapshot", "Delete a snapshot from a virtual machine", s.deleteVMSnapshot, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+		"snap_name": map[string]any{"type": "string", "description": "Snapshot name"},
+		"force":     map[string]any{"type": "boolean", "description": "Force delete (optional)"},
+	})
+	addTool("restore_vm_snapshot", "Restore a virtual machine from a snapshot", s.restoreVMSnapshot, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+		"snap_name": map[string]any{"type": "string", "description": "Snapshot name"},
+	})
+	addTool("get_vm_firewall_rules", "Get firewall rules for a virtual machine", s.getVMFirewallRules, map[string]any{
+		"node_name": map[string]any{"type": "string", "description": "Name of the node"},
+		"vmid":      map[string]any{"type": "integer", "description": "VM ID"},
+	})
+	addTool("migrate_vm", "Migrate a virtual machine to another node", s.migrateVM, map[string]any{
+		"node_name":  map[string]any{"type": "string", "description": "Source node name"},
+		"vmid":       map[string]any{"type": "integer", "description": "VM ID"},
+		"target_node": map[string]any{"type": "string", "description": "Target node name"},
+		"online":     map[string]any{"type": "boolean", "description": "Perform live migration (optional)"},
+	})
 
 	// Container Management - Query
 	addTool("get_containers", "Get all containers on a specific node", s.getContainers, map[string]any{
@@ -944,6 +979,225 @@ func (s *Server) updateVMConfig(ctx context.Context, request mcp.CallToolRequest
 		"node":   nodeName,
 		"config": config,
 		"result": result,
+	})
+}
+
+// getVMConsole handles the get_vm_console tool
+func (s *Server) getVMConsole(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_vm_console")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	result, err := s.proxmoxClient.GetVMConsole(ctx, nodeName, vmID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get VM console: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"vmid":   vmID,
+		"node":   nodeName,
+		"console": result,
+	})
+}
+
+// createVMSnapshot handles the create_vm_snapshot tool
+func (s *Server) createVMSnapshot(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: create_vm_snapshot")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	snapName := request.GetString("snap_name", "")
+	if snapName == "" {
+		return mcp.NewToolResultError("snap_name parameter is required"), nil
+	}
+
+	description := request.GetString("description", "")
+
+	result, err := s.proxmoxClient.CreateVMSnapshot(ctx, nodeName, vmID, snapName, description)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create VM snapshot: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":      "create_snapshot",
+		"vmid":        vmID,
+		"node":        nodeName,
+		"snapshot":    snapName,
+		"description": description,
+		"result":      result,
+	})
+}
+
+// listVMSnapshots handles the list_vm_snapshots tool
+func (s *Server) listVMSnapshots(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: list_vm_snapshots")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	result, err := s.proxmoxClient.ListVMSnapshots(ctx, nodeName, vmID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to list VM snapshots: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"vmid":      vmID,
+		"node":      nodeName,
+		"snapshots": result,
+	})
+}
+
+// deleteVMSnapshot handles the delete_vm_snapshot tool
+func (s *Server) deleteVMSnapshot(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: delete_vm_snapshot")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	snapName := request.GetString("snap_name", "")
+	if snapName == "" {
+		return mcp.NewToolResultError("snap_name parameter is required"), nil
+	}
+
+	force := request.GetBool("force", false)
+
+	result, err := s.proxmoxClient.DeleteVMSnapshot(ctx, nodeName, vmID, snapName, force)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to delete VM snapshot: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":   "delete_snapshot",
+		"vmid":     vmID,
+		"node":     nodeName,
+		"snapshot": snapName,
+		"force":    force,
+		"result":   result,
+	})
+}
+
+// restoreVMSnapshot handles the restore_vm_snapshot tool
+func (s *Server) restoreVMSnapshot(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: restore_vm_snapshot")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	snapName := request.GetString("snap_name", "")
+	if snapName == "" {
+		return mcp.NewToolResultError("snap_name parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.RestoreVMSnapshot(ctx, nodeName, vmID, snapName)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to restore VM snapshot: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":   "restore_snapshot",
+		"vmid":     vmID,
+		"node":     nodeName,
+		"snapshot": snapName,
+		"result":   result,
+	})
+}
+
+// getVMFirewallRules handles the get_vm_firewall_rules tool
+func (s *Server) getVMFirewallRules(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_vm_firewall_rules")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	result, err := s.proxmoxClient.GetVMFirewallRules(ctx, nodeName, vmID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get VM firewall rules: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"vmid":   vmID,
+		"node":   nodeName,
+		"rules":  result,
+	})
+}
+
+// migrateVM handles the migrate_vm tool
+func (s *Server) migrateVM(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: migrate_vm")
+
+	nodeName := request.GetString("node_name", "")
+	if nodeName == "" {
+		return mcp.NewToolResultError("node_name parameter is required"), nil
+	}
+
+	vmID := request.GetInt("vmid", 0)
+	if vmID <= 0 {
+		return mcp.NewToolResultError("vmid parameter is required and must be a positive integer"), nil
+	}
+
+	targetNode := request.GetString("target_node", "")
+	if targetNode == "" {
+		return mcp.NewToolResultError("target_node parameter is required"), nil
+	}
+
+	online := request.GetBool("online", false)
+
+	result, err := s.proxmoxClient.MigrateVM(ctx, nodeName, vmID, targetNode, online)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to migrate VM: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"action":      "migrate",
+		"vmid":        vmID,
+		"source_node": nodeName,
+		"target_node": targetNode,
+		"online":      online,
+		"result":      result,
 	})
 }
 
