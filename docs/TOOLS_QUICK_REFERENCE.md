@@ -1,24 +1,35 @@
 # Proxmox VE MCP - Complete Tools Reference
 
-**Total Tools**: 68  
-**Last Updated**: Phase 3 Implementation (December 2025)  
+**Total Tools**: 81  
+**Last Updated**: Phase 4 Implementation (December 2025)  
 **Status**: ✅ All tools implemented and tested
 
 ---
 
-## 📊 Tools by Category (68 Total)
+## 📊 Tools by Category (81 Total)
 
-### Cluster & Node Management (6 tools)
+### Cluster & Node Management (11 tools)
 - `get_nodes` - Get all nodes in the cluster
 - `get_node_status` - Get detailed status for a specific node
 - `get_cluster_resources` - Get all cluster resources
 - `get_cluster_status` - Get cluster-wide status
 - `get_node_tasks` - Get tasks for a specific node
 - `get_cluster_tasks` - Get all tasks in the cluster
+- `get_node_config` - Get node network and system configuration
+- `update_node_config` - Modify node settings
+- `reboot_node` - Reboot a node
+- `shutdown_node` - Gracefully shutdown a node
+- `get_node_disks` - List physical disks in a node
+- `get_node_cert` - Get SSL certificate information
 
-### Storage Management (4 tools)
+### Storage Management (9 tools)
 - `get_storage` - Get all storage devices
 - `get_node_storage` - Get storage devices for a specific node
+- `get_storage_info` - Get detailed storage device information
+- `create_storage` - Create new storage mount
+- `delete_storage` - Remove storage configuration
+- `update_storage` - Modify storage configuration
+- `get_storage_content` - List storage contents (ISOs, backups, etc.)
 - `list_backups` - List available backups in storage
 - [Additional storage operations available]
 
@@ -77,6 +88,11 @@
 - `delete_backup` - Delete a backup file
 - `restore_vm_backup` - Restore VM from backup
 - `restore_container_backup` - Restore container from backup
+
+### Task Management (3 tools)
+- `get_task_status` - Get detailed task status and progress
+- `get_task_log` - Get task execution log output
+- `cancel_task` - Cancel a running task
 
 ### User & Access Management (15 tools)
 #### Query (7)
