@@ -488,10 +488,21 @@ func (s *Server) registerTools() {
 		"node_name": map[string]any{"type": "string", "description": "Node name"},
 	})
 
+	// ============ HA (HIGH AVAILABILITY) CLUSTER MANAGEMENT ============
+	addTool("get_ha_status", "Get cluster High Availability status", s.getHAStatus, map[string]any{})
+	addTool("enable_ha_resource", "Enable High Availability for a resource", s.enableHAResource, map[string]any{
+		"sid":     map[string]any{"type": "string", "description": "Resource ID (sid format: type:id, e.g., vm:100)"},
+		"comment": map[string]any{"type": "string", "description": "HA resource comment (optional)"},
+		"state":   map[string]any{"type": "string", "description": "Initial state: started or stopped (optional)"},
+	})
+	addTool("disable_ha_resource", "Disable High Availability for a resource", s.disableHAResource, map[string]any{
+		"sid": map[string]any{"type": "string", "description": "Resource ID to disable HA"},
+	})
+
 	for _, tool := range tools {
 		s.server.AddTool(tool.Tool, tool.Handler)
 	}
-	s.logger.Info("Registered 93 tools")
+	s.logger.Info("Registered 96 tools")
 }
 
 // ServeStdio starts the MCP server with stdio transport
@@ -3187,5 +3198,64 @@ func (s *Server) getNodeDNS(ctx context.Context, request mcp.CallToolRequest) (*
 		"message": "Node DNS configuration retrieved successfully",
 		"node":    nodeName,
 		"dns":     dns,
+	})
+}
+
+// ============ HA (HIGH AVAILABILITY) CLUSTER MANAGEMENT HANDLERS ============
+
+func (s *Server) getHAStatus(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: get_ha_status")
+
+	status, err := s.proxmoxClient.GetHAStatus(ctx)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get HA status: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "HA status retrieved successfully",
+		"status":  status,
+	})
+}
+
+func (s *Server) enableHAResource(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: enable_ha_resource")
+
+	sid := request.GetString("sid", "")
+	if sid == "" {
+		return mcp.NewToolResultError("sid parameter is required"), nil
+	}
+
+	comment := request.GetString("comment", "")
+	state := request.GetString("state", "")
+
+	result, err := s.proxmoxClient.EnableHAResource(ctx, sid, comment, state)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to enable HA resource: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "HA resource enabled successfully",
+		"sid":     sid,
+		"result":  result,
+	})
+}
+
+func (s *Server) disableHAResource(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	s.logger.Debug("Tool called: disable_ha_resource")
+
+	sid := request.GetString("sid", "")
+	if sid == "" {
+		return mcp.NewToolResultError("sid parameter is required"), nil
+	}
+
+	result, err := s.proxmoxClient.DisableHAResource(ctx, sid)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to disable HA resource: %v", err)), nil
+	}
+
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"message": "HA resource disabled successfully",
+		"sid":     sid,
+		"result":  result,
 	})
 }
