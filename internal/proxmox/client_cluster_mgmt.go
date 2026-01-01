@@ -6,18 +6,14 @@ import (
 )
 
 // GetClusterConfig retrieves cluster configuration
-func (c *Client) GetClusterConfig(ctx context.Context) (map[string]interface{}, error) {
+func (c *Client) GetClusterConfig(ctx context.Context) (interface{}, error) {
 	data, err := c.doRequest(ctx, "GET", "cluster/config", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	config, ok := data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected cluster config format")
-	}
-
-	return config, nil
+	// Handle both map and array formats
+	return data, nil
 }
 
 // GetClusterNodesStatus retrieves status of all nodes in the cluster
@@ -31,18 +27,14 @@ func (c *Client) GetClusterNodesStatus(ctx context.Context) (interface{}, error)
 }
 
 // GetHAStatus retrieves High Availability status
-func (c *Client) GetHAStatus(ctx context.Context) (map[string]interface{}, error) {
+func (c *Client) GetHAStatus(ctx context.Context) (interface{}, error) {
 	data, err := c.doRequest(ctx, "GET", "cluster/ha/status/current", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	status, ok := data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected HA status format")
-	}
-
-	return status, nil
+	// Handle both map and array formats
+	return data, nil
 }
 
 // EnableHAResource enables High Availability for a resource

@@ -32,6 +32,21 @@ func NewServer(proxmoxClient *proxmox.Client) *Server {
 	return s
 }
 
+// getArrayLength returns the length of an array if the value is an array, otherwise returns 0
+func getArrayLength(v interface{}) int {
+	if arr, ok := v.([]interface{}); ok {
+		return len(arr)
+	}
+	// Try to unmarshal if it's raw JSON
+	if data, err := json.Marshal(v); err == nil {
+		var arr []interface{}
+		if json.Unmarshal(data, &arr) == nil {
+			return len(arr)
+		}
+	}
+	return 0
+}
+
 func (s *Server) registerTools() {
 	tools := []server.ServerTool{}
 
@@ -724,7 +739,11 @@ func (s *Server) getClusterResources(ctx context.Context, request mcp.CallToolRe
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to get cluster resources: %v", err)), nil
 	}
 
-	return mcp.NewToolResultJSON(resources)
+	// Wrap array response in object for MCP compatibility
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"resources": resources,
+		"count":     getArrayLength(resources),
+	})
 }
 
 // getClusterStatus handles the get_cluster_status tool
@@ -736,7 +755,11 @@ func (s *Server) getClusterStatus(ctx context.Context, request mcp.CallToolReque
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to get cluster status: %v", err)), nil
 	}
 
-	return mcp.NewToolResultJSON(status)
+	// Wrap array response in object for MCP compatibility
+	return mcp.NewToolResultJSON(map[string]interface{}{
+		"status": status,
+		"count":  getArrayLength(status),
+	})
 }
 
 // getStorage handles the get_storage tool

@@ -94,18 +94,14 @@ func (c *Client) GetNodeLogs(ctx context.Context, nodeName string, lines int) (m
 }
 
 // GetNodeAPTUpdates checks available package updates
-func (c *Client) GetNodeAPTUpdates(ctx context.Context, nodeName string) (map[string]interface{}, error) {
+func (c *Client) GetNodeAPTUpdates(ctx context.Context, nodeName string) (interface{}, error) {
 	data, err := c.doRequest(ctx, "GET", fmt.Sprintf("nodes/%s/apt/update", nodeName), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	updates, ok := data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected apt updates format")
-	}
-
-	return updates, nil
+	// Handle both map and array formats
+	return data, nil
 }
 
 // ApplyNodeUpdates installs system updates on a node
