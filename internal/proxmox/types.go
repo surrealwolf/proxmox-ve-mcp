@@ -158,13 +158,13 @@ type APIToken struct {
 	FullTokenID string `json:"full-tokenid,omitempty"`
 }
 
-// ACL represents an access control list entry
-type ACL struct {
+// ACLEntry represents an access control list entry
+type ACLEntry struct {
 	Path        string `json:"path"`
 	RoleID      string `json:"roleid"`
-	UserID      string `json:"userid,omitempty"`
-	GroupID     string `json:"groupid,omitempty"`
-	TokenID     string `json:"tokenid,omitempty"`
+	UserID      string `json:"user,omitempty"`
+	GroupID     string `json:"group,omitempty"`
+	TokenID     string `json:"token,omitempty"`
 	Propagate   int    `json:"propagate,omitempty"`
 	Type        string `json:"type,omitempty"`
 	IssueTime   int64  `json:"issuetime,omitempty"`

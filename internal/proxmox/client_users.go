@@ -163,19 +163,6 @@ func (c *Client) DeleteRole(ctx context.Context, roleID string) (interface{}, er
 	return c.doRequest(ctx, "DELETE", fmt.Sprintf("access/roles/%s", roleID), nil)
 }
 
-// ACLEntry represents an access control list entry
-type ACLEntry struct {
-	Path        string `json:"path"`
-	RoleID      string `json:"roleid"`
-	UserID      string `json:"user,omitempty"`
-	GroupID     string `json:"group,omitempty"`
-	TokenID     string `json:"token,omitempty"`
-	Propagate   int    `json:"propagate,omitempty"`
-	Type        string `json:"type,omitempty"`
-	IssueTime   int64  `json:"issuetime,omitempty"`
-	ExpiresTime int64  `json:"expirestime,omitempty"`
-}
-
 // ListACLs returns all ACL entries
 func (c *Client) ListACLs(ctx context.Context) ([]ACLEntry, error) {
 	data, err := c.doRequest(ctx, "GET", "access/acl", nil)
