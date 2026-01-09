@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
   proxmox-ve-mcp:
+    image: ${HARBOR_REGISTRY:-harbor.dataknife.net}/${HARBOR_PROJECT:-library}/proxmox-ve-mcp:${IMAGE_TAG:-latest}
+    # Fallback to local build if image not available
     build:
       context: .
       dockerfile: Dockerfile

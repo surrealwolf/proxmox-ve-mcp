@@ -301,10 +301,32 @@ make test
 
 ### Docker
 
+**Local Build:**
 ```bash
 make docker-build
 make docker-run
 ```
+
+**Harbor Registry:**
+This project uses Harbor (harbor.dataknife.net) for container images. See [Harbor Setup Documentation](docs/HARBOR_SETUP.md) for:
+- Building and pushing images to Harbor
+- GitHub Actions CI/CD configuration
+- Required GitHub secrets setup
+- Local development with Harbor
+
+**Quick Harbor Commands:**
+```bash
+# Login to Harbor (note: use $$ to escape $ in make)
+make docker-login HARBOR_USER='robot$$library+ci-builder' HARBOR_PASSWORD='your-password'
+
+# Build and push to Harbor
+make docker-push HARBOR_USER='robot$$library+ci-builder' HARBOR_PASSWORD='your-password'
+
+# Pull from Harbor
+make docker-pull
+```
+
+**Note:** Never commit secrets to the repository. Use GitHub secrets for CI/CD and environment variables for local development.
 
 ## License
 
