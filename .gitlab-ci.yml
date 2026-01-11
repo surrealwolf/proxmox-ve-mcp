@@ -34,7 +34,8 @@ publish:
       echo "{
         \"auths\": {
           \"$HARBOR_REGISTRY\": {
-            \"auth\": \"$(printf "%s:%s" "$HARBOR_USERNAME" "$HARBOR_PASSWORD" | base64 | tr -d '\n')\"
+            \"username\": \"$HARBOR_USERNAME\",
+            \"password\": \"$HARBOR_PASSWORD\"
           }
         }
       }" > ~/.docker/config.json
