@@ -28,13 +28,6 @@ publish:
     entrypoint: [""]
   dependencies:
     - build
-  variables:
-    DOCKER_AUTH_CONFIG: ""
-  before_script:
-    - |
-      AUTH_TOKEN=$(printf "%s:%s" "$HARBOR_USERNAME" "$HARBOR_PASSWORD" | base64 | tr -d '\n')
-      export DOCKER_AUTH_CONFIG="{\"auths\":{\"$HARBOR_REGISTRY\":{\"auth\":\"$AUTH_TOKEN\"}}}"
-      echo "Debug: DOCKER_AUTH_CONFIG set (length: ${#DOCKER_AUTH_CONFIG})"
   script:
     - |
       # Use commit SHA if available, otherwise fall back to pipeline ID
