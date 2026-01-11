@@ -41,7 +41,8 @@ docker-build:
       echo "HARBOR_PASSWORD last char: ${HARBOR_PASSWORD: -1}"
       echo ""
       echo "Attempting docker login..."
-      echo "$HARBOR_PASSWORD" | docker login --username "$HARBOR_USERNAME" --password-stdin $HARBOR_REGISTRY || {
+      # Use single quotes to prevent variable expansion of $library in username
+      echo "$HARBOR_PASSWORD" | docker login --username '$HARBOR_USERNAME' --password-stdin $HARBOR_REGISTRY || {
         echo "Docker login failed!"
         echo "Exit code: $?"
         exit 1
