@@ -28,8 +28,6 @@ publish:
     entrypoint: [""]
   dependencies:
     - build
-  variables:
-    SSL_CERT_FILE: /etc/docker/certs.d/harbor.dataknife.net/ca.crt
   before_script:
     - mkdir -p ~/.docker
     - |
